@@ -1,0 +1,141 @@
+# Pre-commit configuration for FinancialAssist Bot
+# Based on best practices from pre-commit, pre-commit-hooks, and ruff
+# See: https://pre-commit.com for documentation
+
+# Default stages: run on pre-commit and pre-push
+default_stages: [pre-commit, pre-push]
+
+# Default language version
+default_language_version:
+  python: python3.11
+
+# Minimum pre-commit version
+minimum_pre_commit_version: "3.0.0"
+
+repos:
+  # Meta hooks: validate pre-commit configuration itself
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes
+
+  # General file checks (pre-commit-hooks)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # File formatting
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]  # Allow custom YAML tags
+      - id: check-toml
+      - id: check-json
+      - id: check-added-large-files
+        args: [--maxkb=1000]  # Warn if files > 1MB
+      - id: check-merge-conflict
+      - id: check-case-conflict
+
+      # Code quality
+      - id: check-ast  # Python syntax validation
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+
+      # Security checks
+      - id: detect-private-key
+      - id: detect-aws-credentials
+      - id: no-commit-to-branch
+        args: [--branch, main, --branch, master]
+
+  # Ruff: Fast Python linter and formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.15
+    hooks:
+      # Run linter with auto-fix
+      - id: ruff-check
+        name: Ruff linter
+        args: [--fix, --exit-non-zero-on-fix]
+        types_or: [python, pyi]
+
+      # Run formatter
+      - id: ruff-format
+        name: Ruff formatter
+        types_or: [python, pyi]
+
+  # Black: Code formatter (backup/alternative to ruff-format)
+  # Note: Ruff can format, but keeping black as option
+  - repo: https://github.com/psf/black
+    rev: 24.1.0
+    hooks:
+      - id: black
+        language_version: python3.11
+        args: [--line-length=100]
+
+  # Pytest: Full test suite
+  - repo: local
+    hooks:
+      - id: pytest
+        name: Run pytest with coverage
+        entry: bash -c 'pytest --cov=src --cov-report=term-missing --cov-fail-under=80 --tb=short'
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]  # Run full tests on pre-push, not pre-commit
+        verbose: true
+
+  # Security: Detect secrets and sensitive data
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package.lock.json
+
+  # Additional Python checks
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        name: Bandit security linter
+        args: [-r, src/, -ll]  # Low confidence, low severity
+        exclude: tests/
+
+  # Type checking with mypy (optional, can be slow)
+  # Uncomment if you want type checking
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.8.0
+  #   hooks:
+  #     - id: mypy
+  #       additional_dependencies: [types-all]
+  #       args: [--ignore-missing-imports, --no-strict-optional]
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        args: [--fix]
+
+# Exclude patterns (files/directories to skip)
+exclude: |
+    (?x)^(
+        migrations/.*|
+        \.venv/.*|
+        venv/.*|
+        build/.*|
+        dist/.*|
+        \.eggs/.*|
+        \.git/.*|
+        \.tox/.*|
+        __pycache__/.*|
+        \.pytest_cache/.*|
+        \.mypy_cache/.*|
+        \.ruff_cache/.*|
+        \.coverage.*|
+        htmlcov/.*|
+        \.env.*|
+        \.secrets\.baseline
+    )$
+

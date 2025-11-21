@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  bot:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: financialassist-bot
+    restart: unless-stopped
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - DATABASE_URL=postgresql+asyncpg://financialassist:${POSTGRES_PASSWORD}@postgres:5432/financialassist
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - financialassist-network
+    volumes:
+      - ../logs:/app/logs
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: financialassist-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=financialassist
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_DB=financialassist
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U financialassist"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - financialassist-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: financialassist-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - financialassist-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  financialassist-network:
+    driver: bridge
+
