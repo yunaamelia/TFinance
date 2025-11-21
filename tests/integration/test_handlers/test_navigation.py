@@ -42,9 +42,15 @@ class TestNavigationFlow:
     @patch("src.bot.handlers.navigation.get_redis_client")
     async def test_handle_home(self, mock_get_redis, mock_update, mock_context):
         """Test Home button handler."""
-        mock_update.callback_query = MagicMock()
-        mock_update.callback_query.answer = AsyncMock()
-        mock_update.callback_query.edit_message_text = AsyncMock()
+        from telegram import CallbackQuery
+
+        callback_query = MagicMock(spec=CallbackQuery)
+        callback_query.answer = AsyncMock()
+        callback_query.edit_message_text = AsyncMock()
+        callback_query.from_user = mock_update.effective_user
+        callback_query.data = "home"
+
+        object.__setattr__(mock_update, "callback_query", callback_query)
 
         mock_redis = AsyncMock()
         mock_get_redis.return_value = mock_redis
@@ -52,17 +58,23 @@ class TestNavigationFlow:
         await handle_home(mock_update, mock_context)
 
         # Verify message was updated
-        mock_update.callback_query.edit_message_text.assert_called_once()
-        call_args = mock_update.callback_query.edit_message_text.call_args
+        callback_query.edit_message_text.assert_called_once()
+        call_args = callback_query.edit_message_text.call_args
         assert "Welcome" in call_args[0][0] or "Welcome back" in call_args[0][0]
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.navigation.get_redis_client")
     async def test_handle_back(self, mock_get_redis, mock_update, mock_context):
         """Test Back button handler."""
-        mock_update.callback_query = MagicMock()
-        mock_update.callback_query.answer = AsyncMock()
-        mock_update.callback_query.edit_message_text = AsyncMock()
+        from telegram import CallbackQuery
+
+        callback_query = MagicMock(spec=CallbackQuery)
+        callback_query.answer = AsyncMock()
+        callback_query.edit_message_text = AsyncMock()
+        callback_query.from_user = mock_update.effective_user
+        callback_query.data = "back"
+
+        object.__setattr__(mock_update, "callback_query", callback_query)
 
         mock_redis = AsyncMock()
         mock_get_redis.return_value = mock_redis
@@ -73,15 +85,21 @@ class TestNavigationFlow:
         await handle_back(mock_update, mock_context)
 
         # Verify navigation occurred
-        mock_update.callback_query.edit_message_text.assert_called()
+        callback_query.edit_message_text.assert_called()
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.navigation.get_redis_client")
     async def test_handle_help(self, mock_get_redis, mock_update, mock_context):
         """Test Help button handler."""
-        mock_update.callback_query = MagicMock()
-        mock_update.callback_query.answer = AsyncMock()
-        mock_update.callback_query.edit_message_text = AsyncMock()
+        from telegram import CallbackQuery
+
+        callback_query = MagicMock(spec=CallbackQuery)
+        callback_query.answer = AsyncMock()
+        callback_query.edit_message_text = AsyncMock()
+        callback_query.from_user = mock_update.effective_user
+        callback_query.data = "help"
+
+        object.__setattr__(mock_update, "callback_query", callback_query)
 
         mock_redis = AsyncMock()
         mock_get_redis.return_value = mock_redis
@@ -90,6 +108,6 @@ class TestNavigationFlow:
         await handle_help(mock_update, mock_context)
 
         # Verify help message was sent
-        mock_update.callback_query.edit_message_text.assert_called_once()
-        call_args = mock_update.callback_query.edit_message_text.call_args
+        callback_query.edit_message_text.assert_called_once()
+        call_args = callback_query.edit_message_text.call_args
         assert "Help" in call_args[0][0]
