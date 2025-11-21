@@ -46,7 +46,7 @@ class User(Base):
         "Transaction",
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="dynamic",
+        lazy="raise_on_sql",  # Prevents unexpected N+1 queries
     )
 
     def __repr__(self) -> str:

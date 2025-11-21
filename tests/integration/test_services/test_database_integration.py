@@ -63,7 +63,9 @@ async def test_transaction_persistence(test_db):
         assert transaction.amount == Decimal("50000.00")
         assert transaction.type == "expense"
 
-        # Retrieve transaction
+        # Retrieve transaction (refresh user to avoid relationship access issues)
+        await session.refresh(user)
+
         retrieved = await service.get_transaction_by_id(user.id, transaction.id)
 
         assert retrieved is not None
