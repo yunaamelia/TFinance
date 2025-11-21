@@ -1,5 +1,6 @@
 """Rate limiting middleware for Telegram bot."""
 
+import asyncio
 import logging
 import time
 from collections import defaultdict
@@ -140,3 +141,35 @@ async def check_rate_limit(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         return False
 
     return True
+
+
+async def handle_telegram_retry_after(func, *args, max_retries: int = 3, **kwargs):
+    """Handle Telegram RetryAfter errors with exponential backoff.
+
+    Args:
+        func: Async function to execute
+        *args: Positional arguments for func
+        max_retries: Maximum number of retries
+        **kwargs: Keyword arguments for func
+
+    Returns:
+        Result of func execution
+
+    Raises:
+        Exception: If all retries fail
+    """
+    from telegram.error import RetryAfter
+
+    for attempt in range(max_retries):
+        try:
+            return await func(*args, **kwargs)
+        except RetryAfter as e:
+            wait_time = e.retry_after
+            if attempt < max_retries - 1:
+                logger.warning(
+                    f"Flood control: Waiting {wait_time}s (attempt {attempt + 1}/{max_retries})"
+                )
+                await asyncio.sleep(wait_time + 1)  # Add 1 second buffer
+            else:
+                logger.error(f"Flood control: Max retries ({max_retries}) exceeded")
+                raise

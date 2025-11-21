@@ -6,6 +6,7 @@ from telegram import Update
 from telegram.ext import Application, ContextTypes
 
 from src.bot.config.settings import settings
+from src.bot.middleware.rate_limiter import check_rate_limit
 from src.bot.utils.errors import (
     AIServiceError,
     DatabaseError,
@@ -54,6 +55,11 @@ def main():
 
     # Create application
     application = Application.builder().token(settings.telegram_bot_token).build()
+
+    # Register middleware (rate limiting)
+    from telegram.ext import MessageHandler, filters
+
+    application.add_handler(MessageHandler(filters.ALL, check_rate_limit), group=0)
 
     # Register error handler
     application.add_error_handler(error_handler)

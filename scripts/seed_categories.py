@@ -40,22 +40,28 @@ async def seed_categories():
         # Check if categories already exist
         result = await session.execute(select(Category).where(Category.is_system))
         existing_categories = result.scalars().all()
+        existing_names = {cat.name for cat in existing_categories}
 
         if existing_categories:
             print(f"Found {len(existing_categories)} existing system categories. Skipping seed.")
             return
 
-        # Create categories
+        # Create categories (skip if name already exists)
         categories = []
         for cat_data in DEFAULT_CATEGORIES:
-            category = Category(**cat_data)
-            categories.append(category)
-            session.add(category)
+            if cat_data["name"] not in existing_names:
+                category = Category(**cat_data)
+                categories.append(category)
+                session.add(category)
+                existing_names.add(cat_data["name"])
 
-        await session.commit()
-        print(f"Successfully seeded {len(categories)} default categories:")
-        for cat in categories:
-            print(f"  - {cat.icon} {cat.name} ({cat.type})")
+        if categories:
+            await session.commit()
+            print(f"Successfully seeded {len(categories)} default categories:")
+            for cat in categories:
+                print(f"  - {cat.icon} {cat.name} ({cat.type})")
+        else:
+            print("No new categories to seed.")
 
 
 if __name__ == "__main__":
