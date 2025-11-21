@@ -50,12 +50,13 @@ class TestTransactionRecordingJourney:
         context.user_data = {}
 
         # Step 1: Start command
-        update.message.text = "/start"
-        update.message.reply_text = AsyncMock()
-        await start_command(update, context)
+        from unittest.mock import patch
 
-        # Verify welcome message sent
-        update.message.reply_text.assert_called()
+        object.__setattr__(update.message, "text", "/start")
+        with patch.object(Message, "reply_text", new_callable=AsyncMock) as mock_reply:
+            await start_command(update, context)
+            # Verify welcome message sent
+            mock_reply.assert_called()
 
         # Step 2: Select transaction type (would be via callback_query in real flow)
         # This is tested in integration tests

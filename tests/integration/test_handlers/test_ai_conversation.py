@@ -41,20 +41,40 @@ class TestAIConversationFlow:
     @pytest.mark.asyncio
     async def test_start_ai_chat(self, mock_update, mock_context):
         """Test starting AI chat conversation."""
-        mock_update.callback_query = MagicMock()
-        mock_update.callback_query.edit_message_text = AsyncMock()
+        from telegram import CallbackQuery
+
+        # Create proper callback query mock
+        callback_query = MagicMock(spec=CallbackQuery)
+        callback_query.answer = AsyncMock()
+        callback_query.edit_message_text = AsyncMock()
+        callback_query.from_user = mock_update.effective_user
+        callback_query.data = "ask_jarvis"
+
+        # Use object.__setattr__ to set readonly attribute
+        object.__setattr__(mock_update, "callback_query", callback_query)
 
         await start_ai_chat(mock_update, mock_context)
 
         # Verify message was sent
-        mock_update.callback_query.edit_message_text.assert_called_once()
+        callback_query.edit_message_text.assert_called_once()
         # Check that prompt message was sent
-        call_args = mock_update.callback_query.edit_message_text.call_args
+        call_args = callback_query.edit_message_text.call_args
         assert "JARVIS" in call_args[0][0] or "assist" in call_args[0][0].lower()
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.ai_chat.get_ai_service")
-    async def test_handle_ai_message(self, mock_get_service, mock_update, mock_context):
+    @patch("src.bot.handlers.ai_chat.get_async_session_maker")
+    @patch("src.bot.handlers.ai_chat.get_redis_client")
+    @patch("src.bot.handlers.ai_chat.TransactionService")
+    async def test_handle_ai_message(
+        self,
+        mock_transaction_service,
+        mock_redis,
+        mock_session,
+        mock_get_service,
+        mock_update,
+        mock_context,
+    ):
         """Test handling AI message."""
         # Mock AI service
         mock_ai_service = AsyncMock()
@@ -63,7 +83,26 @@ class TestAIConversationFlow:
         )
         mock_get_service.return_value = mock_ai_service
 
-        mock_update.message.reply_text = AsyncMock()
+        # Mock database session
+        mock_db_session = AsyncMock()
+        mock_session.return_value.__aenter__.return_value = mock_db_session
+        mock_session.return_value.__aexit__.return_value = None
+
+        # Mock TransactionService
+        mock_transaction_service_instance = AsyncMock()
+        mock_transaction_service_instance.get_transactions = AsyncMock(return_value=[])
+        mock_transaction_service.return_value = mock_transaction_service_instance
+
+        # Mock Redis
+        mock_redis.return_value = AsyncMock()
+
+        # Create a mock message with reply_text
+        mock_message = MagicMock(spec=Message)
+        mock_message.text = "Hello JARVIS"
+        mock_message.reply_text = AsyncMock()
+        mock_message.chat = mock_update.message.chat
+        mock_message.from_user = mock_update.message.from_user
+        object.__setattr__(mock_update, "message", mock_message)
 
         await handle_ai_message(mock_update, mock_context)
 
@@ -71,4 +110,4 @@ class TestAIConversationFlow:
         mock_ai_service.generate_response.assert_called_once()
 
         # Verify response was sent
-        mock_update.message.reply_text.assert_called_once()
+        mock_message.reply_text.assert_called_once()

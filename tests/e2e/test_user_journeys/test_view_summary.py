@@ -42,15 +42,22 @@ class TestViewSummaryJourney:
         context.user_data = {}
 
         # Step 1: Start summary view (via callback)
-        update.callback_query = MagicMock()
-        update.callback_query.edit_message_text = AsyncMock()
+        from telegram import CallbackQuery
+
+        callback_query = MagicMock(spec=CallbackQuery)
+        callback_query.answer = AsyncMock()
+        callback_query.edit_message_text = AsyncMock()
+        callback_query.from_user = telegram_user
+        callback_query.data = "view_summary"
+
+        object.__setattr__(update, "callback_query", callback_query)
         await start_summary(update, context)
 
         # Verify summary view started
-        update.callback_query.edit_message_text.assert_called()
+        callback_query.edit_message_text.assert_called()
 
         # Step 2: Select period
-        update.callback_query.data = "period:month"
+        object.__setattr__(callback_query, "data", "period:month")
         await handle_period_selection(update, context)
 
         # Verify period was selected

@@ -15,7 +15,12 @@ class TestAIInsightsJourney:
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.ai_chat.get_ai_service")
-    async def test_complete_ai_insights_flow(self, mock_get_service):
+    @patch("src.bot.handlers.ai_chat.get_async_session_maker")
+    @patch("src.bot.handlers.ai_chat.get_redis_client")
+    @patch("src.bot.handlers.ai_chat.TransactionService")
+    async def test_complete_ai_insights_flow(
+        self, mock_transaction_service, mock_redis, mock_session, mock_get_service
+    ):
         """Test complete flow from asking JARVIS to getting insights."""
         # Mock AI service
         mock_ai_service = AsyncMock()
@@ -27,6 +32,19 @@ class TestAIInsightsJourney:
             ),
         )
         mock_get_service.return_value = mock_ai_service
+
+        # Mock database session
+        mock_db_session = AsyncMock()
+        mock_session.return_value.__aenter__.return_value = mock_db_session
+        mock_session.return_value.__aexit__.return_value = None
+
+        # Mock TransactionService
+        mock_transaction_service_instance = AsyncMock()
+        mock_transaction_service_instance.get_transactions = AsyncMock(return_value=[])
+        mock_transaction_service.return_value = mock_transaction_service_instance
+
+        # Mock Redis
+        mock_redis.return_value = AsyncMock()
 
         # Create update and context
         telegram_user = TelegramUser(
@@ -46,14 +64,26 @@ class TestAIInsightsJourney:
         context.user_data = {}
 
         # Step 1: Start AI chat (via callback)
-        update.callback_query = MagicMock()
-        update.callback_query.edit_message_text = AsyncMock()
+        from telegram import CallbackQuery
+
+        callback_query = MagicMock(spec=CallbackQuery)
+        callback_query.answer = AsyncMock()
+        callback_query.edit_message_text = AsyncMock()
+        callback_query.from_user = telegram_user
+        callback_query.data = "ask_jarvis"
+
+        object.__setattr__(update, "callback_query", callback_query)
         await start_ai_chat(update, context)
 
         # Step 2: Send message to AI
-        update.message = message
-        update.message.text = "What did I spend most on this month?"
-        update.message.reply_text = AsyncMock()
+        # Create a mock message with reply_text
+        mock_message = MagicMock(spec=Message)
+        mock_message.text = "What did I spend most on this month?"
+        mock_message.reply_text = AsyncMock()
+        mock_message.chat = chat
+        mock_message.from_user = telegram_user
+        object.__setattr__(update, "message", mock_message)
+
         await handle_ai_message(update, context)
 
         # Verify AI service was called with correct context
@@ -62,4 +92,4 @@ class TestAIInsightsJourney:
         assert "What did I spend most" in call_args[0][0]
 
         # Verify response was sent to user
-        update.message.reply_text.assert_called()
+        mock_message.reply_text.assert_called()
