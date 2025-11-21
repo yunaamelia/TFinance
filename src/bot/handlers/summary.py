@@ -1,23 +1,27 @@
 """Summary viewing handlers."""
 
 import logging
-from typing import Dict
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes, ConversationHandler
-from telegram.ext import CallbackQueryHandler, MessageHandler, filters
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import (
+    CallbackQueryHandler,
+    ContextTypes,
+    ConversationHandler,
+    MessageHandler,
+    filters,
+)
 
 from src.bot.config.settings import get_async_session_maker, get_redis_client
-from src.bot.keyboards.builder import build_period_selector_keyboard, build_pagination_keyboard
+from src.bot.keyboards.builder import build_pagination_keyboard, build_period_selector_keyboard
 from src.bot.keyboards.main_menu import build_main_menu_keyboard
 from src.bot.keyboards.navigation import build_navigation_row
-from src.bot.models.user import User
+from src.bot.services.navigation_service import NavigationService
 from src.bot.services.summary_service import SummaryService
 from src.bot.services.transaction_service import TransactionService
 from src.bot.utils.errors import DatabaseError
 from src.bot.utils.formatters import (
-    format_summary,
     format_category_breakdown,
+    format_summary,
     format_transaction_list_paginated,
 )
 
@@ -286,4 +290,3 @@ summary_conversation_handler = ConversationHandler(
         MessageHandler(filters.COMMAND, cancel_summary),
     ],
 )
-

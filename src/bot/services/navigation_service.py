@@ -2,7 +2,6 @@
 
 import json
 import logging
-from typing import Dict, List, Optional
 
 import redis.asyncio as redis
 from telegram import InlineKeyboardMarkup
@@ -25,7 +24,7 @@ class NavigationService:
         self.redis = redis_client
         self.ttl = 3600  # 1 hour TTL for navigation state
 
-    async def get_navigation_state(self, user_id: int) -> Dict:
+    async def get_navigation_state(self, user_id: int) -> dict:
         """Get user's current navigation state.
 
         Args:
@@ -70,7 +69,7 @@ class NavigationService:
             cache_key = f"navigation:{user_id}"
             state = await self.get_navigation_state(user_id)
 
-            stack: List[str] = state.get("stack", ["main_menu"])
+            stack: list[str] = state.get("stack", ["main_menu"])
 
             # Don't add if already at this screen
             if stack and stack[-1] == screen:
@@ -119,7 +118,7 @@ class NavigationService:
             cache_key = f"navigation:{user_id}"
             state = await self.get_navigation_state(user_id)
 
-            stack: List[str] = state.get("stack", ["main_menu"])
+            stack: list[str] = state.get("stack", ["main_menu"])
 
             # Can't go back from main menu
             if len(stack) <= 1:
@@ -157,7 +156,7 @@ class NavigationService:
         self,
         user_id: int,
         screen: str,
-        additional_buttons: Optional[List] = None,
+        additional_buttons: list | None = None,
     ) -> InlineKeyboardMarkup:
         """Build inline keyboard for a screen with navigation buttons.
 
@@ -169,7 +168,7 @@ class NavigationService:
         Returns:
             InlineKeyboardMarkup with contextually appropriate buttons
         """
-        from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+        from telegram import InlineKeyboardMarkup
 
         buttons = []
 
@@ -215,4 +214,3 @@ class NavigationService:
                 logger.debug(f"Navigation reset: user {user_id}")
         except Exception as e:
             logger.error(f"Error resetting navigation: {e}", exc_info=True)
-

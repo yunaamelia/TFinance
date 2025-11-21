@@ -1,13 +1,14 @@
 """Unit tests for AIService."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
 from decimal import Decimal
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
+from src.bot.config.persona import JARVIS_PERSONA_V1, build_jarvis_prompt
 from src.bot.models.transaction import Transaction, TransactionType
-from src.bot.services.ai_service import OpenAIService, AIService
-from src.bot.config.persona import build_jarvis_prompt, JARVIS_PERSONA_V1
+from src.bot.services.ai_service import OpenAIService
 from src.bot.utils.errors import AIServiceError
 
 
@@ -178,4 +179,3 @@ class TestOpenAIService:
         assert "top_categories" in result
         assert "trends" in result
         assert "recommendations" in result
-

@@ -36,4 +36,3 @@ echo "  pre-commit run --all-files"
 echo ""
 echo "To skip hooks (not recommended):"
 echo "  git commit --no-verify"
-

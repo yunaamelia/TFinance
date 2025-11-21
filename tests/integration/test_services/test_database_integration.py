@@ -1,13 +1,13 @@
 """Integration tests for database operations."""
 
-import pytest
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+import pytest
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
-from src.bot.models import Base, User, Transaction
+from src.bot.models import Base, User
 from src.bot.services.transaction_service import TransactionService
 
 
@@ -74,8 +74,9 @@ async def test_transaction_persistence(test_db):
 @pytest.mark.asyncio
 async def test_summary_database_queries(test_db):
     """Test summary service database queries."""
-    from src.bot.services.summary_service import SummaryService
     from unittest.mock import AsyncMock
+
+    from src.bot.services.summary_service import SummaryService
 
     async_session_maker = test_db
     mock_redis = AsyncMock()
@@ -135,9 +136,9 @@ async def test_summary_database_queries(test_db):
 @pytest.mark.asyncio
 async def test_navigation_state_persistence():
     """Test navigation state persistence in Redis."""
-    from src.bot.services.navigation_service import NavigationService
     from unittest.mock import AsyncMock
-    import json
+
+    from src.bot.services.navigation_service import NavigationService
 
     mock_redis = AsyncMock()
 
@@ -174,4 +175,3 @@ async def test_navigation_state_persistence():
     assert previous == "main_menu"
     # Verify state was updated
     assert mock_redis.set.call_count >= 2
-

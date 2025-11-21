@@ -1,7 +1,8 @@
 """Unit tests for validation utilities."""
 
-import pytest
 from decimal import Decimal
+
+import pytest
 
 from src.bot.utils.errors import ValidationError
 from src.bot.utils.validators import (
@@ -103,4 +104,3 @@ class TestTransactionTypeValidator:
         """Test invalid type raises ValidationError."""
         with pytest.raises(ValidationError, match="must be 'income' or 'expense'"):
             validate_transaction_type("invalid")
-

@@ -1,12 +1,17 @@
 """AI chat handlers for JARVIS conversation."""
 
 import logging
-from typing import Dict
 
-from telegram import Update
-from telegram.ext import ContextTypes, ConversationHandler
-from telegram.ext import CallbackQueryHandler, MessageHandler, filters
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import (
+    CallbackQueryHandler,
+    ContextTypes,
+    ConversationHandler,
+    MessageHandler,
+    filters,
+)
 
+from src.bot.config.persona import JARVIS_PERSONA_V1
 from src.bot.config.settings import get_async_session_maker, get_redis_client
 from src.bot.keyboards.main_menu import build_main_menu_keyboard
 from src.bot.keyboards.navigation import build_navigation_row
@@ -14,9 +19,7 @@ from src.bot.models.user import User
 from src.bot.services.ai_service import OpenAIService
 from src.bot.services.navigation_service import NavigationService
 from src.bot.services.transaction_service import TransactionService
-from src.bot.config.persona import JARVIS_PERSONA_V1
 from src.bot.utils.errors import AIServiceError
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 logger = logging.getLogger(__name__)
 
@@ -162,9 +165,9 @@ async def handle_ai_message(
 
             # Keep only last 10 messages
             if len(context.user_data["conversation_history"]) > 10:
-                context.user_data["conversation_history"] = (
-                    context.user_data["conversation_history"][-10:]
-                )
+                context.user_data["conversation_history"] = context.user_data[
+                    "conversation_history"
+                ][-10:]
 
             # Send response
             await update.message.reply_text(response)
@@ -183,8 +186,7 @@ async def handle_ai_message(
     except Exception as e:
         logger.error(f"Error in AI chat: {e}", exc_info=True)
         error_message = (
-            "❌ An error occurred while processing your request. "
-            "Please try again later."
+            "❌ An error occurred while processing your request. Please try again later."
         )
         await update.message.reply_text(error_message)
         return AI_CHAT
@@ -238,4 +240,3 @@ ai_chat_conversation_handler = ConversationHandler(
         MessageHandler(filters.COMMAND, cancel_ai_chat),
     ],
 )
-

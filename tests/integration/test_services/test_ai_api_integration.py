@@ -1,10 +1,11 @@
 """Integration tests for AI API integration."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.bot.services.ai_service import OpenAIService
+import pytest
+
 from src.bot.config.persona import JARVIS_PERSONA_V1
+from src.bot.services.ai_service import OpenAIService
 
 
 class TestAIServiceIntegration:
@@ -93,4 +94,3 @@ class TestAIServiceIntegration:
 
             assert len(content) > 0
             assert "Good" in content or "Sir" in content
-

@@ -77,4 +77,3 @@ specs/
 # Docker
 docker-compose.yml
 Dockerfile*
-

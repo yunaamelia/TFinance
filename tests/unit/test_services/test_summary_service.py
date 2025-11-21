@@ -1,13 +1,13 @@
 """Unit tests for SummaryService."""
 
-import pytest
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
-from src.bot.services.summary_service import SummaryService
+import pytest
+
 from src.bot.models.transaction import Transaction, TransactionType
-from src.bot.utils.errors import DatabaseError
+from src.bot.services.summary_service import SummaryService
 
 
 class TestSummaryService:
@@ -200,7 +200,9 @@ class TestSummaryService:
     async def test_get_financial_summary_with_cache(self, summary_service, mock_redis):
         """Test financial summary retrieval with Redis cache."""
         # Mock cached data
-        cached_data = '{"total_income": 1000000.00, "total_expenses": 500000.00, "net_balance": 500000.00}'
+        cached_data = (
+            '{"total_income": 1000000.00, "total_expenses": 500000.00, "net_balance": 500000.00}'
+        )
         mock_redis.get = AsyncMock(return_value=cached_data)
 
         summary = await summary_service.get_financial_summary(123456789, "month")
@@ -209,14 +211,15 @@ class TestSummaryService:
         mock_redis.get.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_get_financial_summary_without_cache(self, summary_service, mock_session, mock_redis):
+    async def test_get_financial_summary_without_cache(
+        self, summary_service, mock_session, mock_redis
+    ):
         """Test financial summary calculation when cache miss."""
         # Mock cache miss
         mock_redis.get = AsyncMock(return_value=None)
         mock_redis.set = AsyncMock()
 
         # Mock database query
-        from sqlalchemy import select
         mock_query = MagicMock()
         mock_query.where.return_value = mock_query
         mock_query.filter.return_value = mock_query
@@ -233,4 +236,3 @@ class TestSummaryService:
 
         # Verify cache was set
         mock_redis.set.assert_called_once()
-

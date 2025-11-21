@@ -4,16 +4,14 @@ import json
 import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import Dict, List
 
-from sqlalchemy import and_, func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 import redis.asyncio as redis
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.bot.config.settings import settings
 from src.bot.models.transaction import Transaction
 from src.bot.utils.errors import DatabaseError
-from src.bot.utils.formatters import format_currency
 
 logger = logging.getLogger(__name__)
 
@@ -74,9 +72,9 @@ class SummaryService:
     def _calculate_summary(
         self,
         user_id: int,
-        transactions: List[Transaction],
+        transactions: list[Transaction],
         period: str,
-    ) -> Dict:
+    ) -> dict:
         """Calculate financial summary from transactions.
 
         Args:
@@ -113,7 +111,7 @@ class SummaryService:
             "category_breakdown": category_breakdown,
         }
 
-    def _get_category_breakdown(self, transactions: List[Transaction]) -> Dict[str, Decimal]:
+    def _get_category_breakdown(self, transactions: list[Transaction]) -> dict[str, Decimal]:
         """Get expenses grouped by category.
 
         Args:
@@ -137,7 +135,7 @@ class SummaryService:
         self,
         user_id: int,
         period: str = "month",
-    ) -> Dict:
+    ) -> dict:
         """Get financial summary for a time period.
 
         Args:
@@ -223,7 +221,7 @@ class SummaryService:
         self,
         user_id: int,
         period: str = "month",
-    ) -> Dict[str, Decimal]:
+    ) -> dict[str, Decimal]:
         """Get expenses grouped by category.
 
         Args:
@@ -262,4 +260,3 @@ class SummaryService:
                 cache_key = f"summary:{user_id}:{period}"
                 await self.redis.delete(cache_key)
             logger.debug(f"Invalidated cache for user {user_id}")
-

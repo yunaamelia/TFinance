@@ -2,12 +2,11 @@
 
 from datetime import datetime
 from decimal import Decimal
-from typing import List, Optional
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.bot.models.transaction import Transaction, TransactionType
+from src.bot.models.transaction import Transaction
 from src.bot.utils.errors import DatabaseError, ValidationError
 from src.bot.utils.validators import validate_amount, validate_category, validate_transaction_type
 
@@ -98,10 +97,10 @@ class TransactionService:
     async def get_transactions(
         self,
         user_id: int,
-        filters: Optional[dict] = None,
+        filters: dict | None = None,
         page: int = 1,
         per_page: int = 20,
-    ) -> List[Transaction]:
+    ) -> list[Transaction]:
         """Get paginated list of user transactions.
 
         Args:
@@ -162,7 +161,7 @@ class TransactionService:
         self,
         user_id: int,
         transaction_id: int,
-    ) -> Optional[Transaction]:
+    ) -> Transaction | None:
         """Get a specific transaction by ID.
 
         Args:
@@ -192,4 +191,3 @@ class TransactionService:
                 f"Failed to get transaction: {str(e)}",
                 operation="get_transaction_by_id",
             ) from e
-

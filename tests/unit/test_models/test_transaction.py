@@ -1,6 +1,5 @@
 """Unit tests for Transaction model."""
 
-import pytest
 from datetime import datetime
 from decimal import Decimal
 
@@ -80,4 +79,3 @@ class TestTransactionModel:
         assert transaction.deleted_at is None
         transaction.deleted_at = datetime.now()
         assert transaction.deleted_at is not None
-

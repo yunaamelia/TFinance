@@ -34,4 +34,3 @@
 - ✅ All [NEEDS CLARIFICATION] markers resolved
 - ✅ FR-016 updated: Bot response time set to < 2 seconds (user choice: Option A)
 - ✅ Specification ready for planning phase
-

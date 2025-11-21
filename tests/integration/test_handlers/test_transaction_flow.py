@@ -1,20 +1,17 @@
 """Integration tests for transaction recording flow."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
-from telegram import Update, Message, User as TelegramUser, Chat
+import pytest
+from telegram import Chat, Message, Update
+from telegram import User as TelegramUser
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.transaction import (
-    handle_transaction_type,
-    handle_transaction_amount,
-    handle_transaction_category,
-    handle_transaction_description,
-    TRANSACTION_TYPE,
     TRANSACTION_AMOUNT,
     TRANSACTION_CATEGORY,
-    TRANSACTION_DESCRIPTION,
+    handle_transaction_amount,
+    handle_transaction_type,
 )
 
 
@@ -95,4 +92,3 @@ class TestTransactionFlow:
         # Should stay in same state on error
         assert result == TRANSACTION_AMOUNT
         mock_update.message.reply_text.assert_called()
-

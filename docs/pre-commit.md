@@ -47,6 +47,7 @@ pre-commit install --hook-type pre-push
 ### Automatic Execution
 
 Hooks run automatically on:
+
 - `git commit` - Code quality checks
 - `git push` - Full test suite
 
@@ -95,6 +96,7 @@ The configuration is in `.pre-commit-config.yaml`. Key sections:
 ### Excluded Files
 
 The following are excluded from hooks:
+
 - `migrations/` - Database migrations
 - `venv/`, `.venv/` - Virtual environments
 - `build/`, `dist/` - Build artifacts
@@ -143,4 +145,3 @@ If pre-commit is slow:
 - [Pre-commit Hooks](https://github.com/pre-commit/pre-commit-hooks)
 - [Ruff Documentation](https://docs.astral.sh/ruff/)
 - [Pytest Documentation](https://docs.pytest.org/)
-

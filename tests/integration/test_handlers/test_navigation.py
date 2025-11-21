@@ -1,12 +1,13 @@
 """Integration tests for navigation flow."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from telegram import Update, Message, User as TelegramUser, Chat
+import pytest
+from telegram import Chat, Message, Update
+from telegram import User as TelegramUser
 from telegram.ext import ContextTypes
 
-from src.bot.handlers.navigation import handle_home, handle_back, handle_help
+from src.bot.handlers.navigation import handle_back, handle_help, handle_home
 
 
 class TestNavigationFlow:
@@ -67,8 +68,6 @@ class TestNavigationFlow:
         mock_get_redis.return_value = mock_redis
 
         # Mock navigation state with previous screen
-        from src.bot.services.navigation_service import NavigationService
-        nav_service = NavigationService(mock_redis)
         mock_redis.get = AsyncMock(return_value='{"stack": ["main_menu", "add_transaction"]}')
 
         await handle_back(mock_update, mock_context)
@@ -94,4 +93,3 @@ class TestNavigationFlow:
         mock_update.callback_query.edit_message_text.assert_called_once()
         call_args = mock_update.callback_query.edit_message_text.call_args
         assert "Help" in call_args[0][0]
-

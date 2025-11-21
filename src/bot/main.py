@@ -1,6 +1,7 @@
 """Main entry point for FinancialAssist Telegram bot."""
 
 import logging
+
 from telegram import Update
 from telegram.ext import Application, ContextTypes
 
@@ -58,12 +59,13 @@ def main():
     application.add_error_handler(error_handler)
 
     # Register handlers
-    from src.bot.handlers.start import start_command
-    from src.bot.handlers.transaction import transaction_conversation_handler
+    from telegram.ext import CallbackQueryHandler, CommandHandler
+
     from src.bot.handlers.ai_chat import ai_chat_conversation_handler
+    from src.bot.handlers.navigation import handle_back, handle_help, handle_home
+    from src.bot.handlers.start import start_command
     from src.bot.handlers.summary import summary_conversation_handler
-    from src.bot.handlers.navigation import handle_home, handle_back, handle_help
-    from telegram.ext import CommandHandler, CallbackQueryHandler
+    from src.bot.handlers.transaction import transaction_conversation_handler
 
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(transaction_conversation_handler)
@@ -81,4 +83,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

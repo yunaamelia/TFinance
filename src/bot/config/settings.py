@@ -2,7 +2,6 @@
 
 import logging
 import sys
-from typing import Optional
 
 import redis.asyncio as redis
 from pydantic import Field
@@ -15,7 +14,7 @@ from sqlalchemy.orm import sessionmaker
 logging.basicConfig(
     level=logging.INFO,
     format='{"timestamp": "%(asctime)s", "level": "%(levelname)s", "name": "%(name)s", "message": "%(message)s"}',
-    datefmt='%Y-%m-%d %H:%M:%S',
+    datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout),
     ],
@@ -50,7 +49,9 @@ class Settings(BaseSettings):
     cache_ttl: int = Field(default=300, description="Cache TTL in seconds (5 minutes)")
 
     # Application Configuration
-    environment: str = Field(default="development", description="Environment (development/production)")
+    environment: str = Field(
+        default="development", description="Environment (development/production)"
+    )
     log_level: str = Field(default="INFO", description="Logging level")
     bot_response_timeout: int = Field(default=2, description="Bot response timeout in seconds")
 
@@ -69,8 +70,8 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Database engine and session
-_async_engine: Optional[create_async_engine] = None
-_async_session_maker: Optional[async_sessionmaker] = None
+_async_engine: create_async_engine | None = None
+_async_session_maker: async_sessionmaker | None = None
 _sync_engine = None
 _sync_session_maker = None
 
@@ -142,7 +143,7 @@ def get_sync_session_maker():
 
 
 # Redis client
-_redis_client: Optional[redis.Redis] = None
+_redis_client: redis.Redis | None = None
 
 
 async def get_redis_client() -> redis.Redis:
@@ -169,4 +170,3 @@ async def close_redis_client():
 
 # Update log level based on settings
 logging.getLogger().setLevel(getattr(logging, settings.log_level.upper(), logging.INFO))
-

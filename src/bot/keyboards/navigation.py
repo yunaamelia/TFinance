@@ -1,7 +1,5 @@
 """Navigation keyboard builders."""
 
-from typing import Optional
-
 from telegram import InlineKeyboardButton
 
 
@@ -9,7 +7,7 @@ def build_navigation_row(
     show_back: bool = False,
     show_home: bool = True,
     show_help: bool = True,
-) -> Optional[list]:
+) -> list | None:
     """Build navigation button row.
 
     Args:
@@ -32,4 +30,3 @@ def build_navigation_row(
         buttons.append(InlineKeyboardButton("❓ Help", callback_data="nav:help"))
 
     return buttons if buttons else None
-

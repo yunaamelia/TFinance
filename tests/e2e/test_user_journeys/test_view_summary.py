@@ -1,12 +1,13 @@
 """E2E tests for view summary user journey."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from telegram import Update, Message, User as TelegramUser, Chat
-from telegram.ext import Application, ContextTypes
+import pytest
+from telegram import Chat, Message, Update
+from telegram import User as TelegramUser
+from telegram.ext import ContextTypes
 
-from src.bot.handlers.summary import start_summary, handle_period_selection
+from src.bot.handlers.summary import handle_period_selection, start_summary
 
 
 class TestViewSummaryJourney:
@@ -54,4 +55,3 @@ class TestViewSummaryJourney:
 
         # Verify period was selected
         assert context.user_data.get("selected_period") == "month"
-

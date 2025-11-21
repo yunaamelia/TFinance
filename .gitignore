@@ -78,4 +78,3 @@ dmypy.json
 .cursor/
 specs/*/checklists/
 *.pyc
-

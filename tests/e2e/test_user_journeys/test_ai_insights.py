@@ -1,12 +1,13 @@
 """E2E tests for AI insights user journey."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from telegram import Update, Message, User as TelegramUser, Chat
-from telegram.ext import Application, ContextTypes
+import pytest
+from telegram import Chat, Message, Update
+from telegram import User as TelegramUser
+from telegram.ext import ContextTypes
 
-from src.bot.handlers.ai_chat import start_ai_chat, handle_ai_message
+from src.bot.handlers.ai_chat import handle_ai_message, start_ai_chat
 
 
 class TestAIInsightsJourney:
@@ -62,4 +63,3 @@ class TestAIInsightsJourney:
 
         # Verify response was sent to user
         update.message.reply_text.assert_called()
-

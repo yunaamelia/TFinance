@@ -511,7 +511,7 @@ All architectural decisions MUST be documented in ADRs (Architecture Decision Re
 
 ### Code Quality
 
-- **SOLID Principles**: Refactoring.Guru (https://refactoring.guru)
+- **SOLID Principles**: Refactoring.Guru (<https://refactoring.guru>)
 - **Clean Architecture**: Robert C. Martin's "Clean Architecture"
 - **Code Metrics**: SonarQube Quality Gates, ESLint complexity rules
 
@@ -523,13 +523,13 @@ All architectural decisions MUST be documented in ADRs (Architecture Decision Re
 
 ### User Experience
 
-- **WCAG 2.2**: W3C Web Content Accessibility Guidelines (https://www.w3.org/WAI/WCAG22/quickref/)
+- **WCAG 2.2**: W3C Web Content Accessibility Guidelines (<https://www.w3.org/WAI/WCAG22/quickref/>)
 - **Design Systems**: Material Design, Ant Design principles
 - **Responsive Design**: MDN Web Docs responsive design guide
 
 ### Performance
 
-- **Core Web Vitals**: Google Web Vitals documentation (https://web.dev/vitals/)
+- **Core Web Vitals**: Google Web Vitals documentation (<https://web.dev/vitals/>)
 - **Web Performance**: web.dev Learn Performance guide
 - **API Performance**: Industry standards for REST API response times
 
@@ -537,7 +537,7 @@ All architectural decisions MUST be documented in ADRs (Architecture Decision Re
 
 - **12-Factor App Methodology**: For cloud-native application principles
 - **OWASP Top 10**: Security best practices
-- **Semantic Versioning**: https://semver.org/
+- **Semantic Versioning**: <https://semver.org/>
 
 ---
 

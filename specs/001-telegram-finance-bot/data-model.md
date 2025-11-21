@@ -10,6 +10,7 @@
 **Purpose**: Represents a Telegram bot user and their preferences
 
 **Attributes**:
+
 - `id` (BigInteger, Primary Key): Telegram user ID (unique identifier)
 - `username` (String, Optional): Telegram username
 - `first_name` (String): User's first name from Telegram
@@ -21,16 +22,19 @@
 - `preferences` (JSON, Optional): User preferences (default categories, notification settings)
 
 **Relationships**:
+
 - One-to-Many with Transaction (user has many transactions)
 - One-to-One with Session (user has one active session)
 
 **Validation Rules**:
+
 - `id` must be positive integer
 - `language_code` must be valid ISO 639-1 code
 - `timezone` must be valid IANA timezone
 - `default_currency` must be valid ISO 4217 currency code
 
 **Indexes**:
+
 - Primary key on `id`
 - Index on `username` for lookups
 
@@ -41,6 +45,7 @@
 **Purpose**: Represents a single financial transaction (income or expense)
 
 **Attributes**:
+
 - `id` (Integer, Primary Key): Auto-incrementing transaction ID
 - `user_id` (BigInteger, Foreign Key → User.id): Owner of transaction
 - `amount` (Numeric(10, 2)): Transaction amount (positive, 2 decimal places)
@@ -53,9 +58,11 @@
 - `tags` (JSON, Optional): Additional tags for filtering/searching
 
 **Relationships**:
+
 - Many-to-One with User (many transactions belong to one user)
 
 **Validation Rules**:
+
 - `amount` must be > 0
 - `type` must be "income" or "expense"
 - `category` must be non-empty string, max 100 characters
@@ -63,12 +70,14 @@
 - `user_id` must reference existing user
 
 **Indexes**:
+
 - Primary key on `id`
 - Composite index on (`user_id`, `timestamp`) for chronological queries
 - Composite index on (`user_id`, `type`) for filtering by type
 - Index on `category` for category-based queries
 
 **Business Rules**:
+
 - Transactions are immutable once created (audit trail requirement)
 - Deletions soft-delete (add `deleted_at` timestamp)
 - Amounts stored with 2 decimal precision
@@ -80,6 +89,7 @@
 **Purpose**: Aggregated financial data for a user over a time period (calculated, not stored)
 
 **Attributes** (Calculated):
+
 - `user_id` (BigInteger): User identifier
 - `period` (String): Time period ("today", "week", "month", "custom")
 - `start_date` (DateTime): Period start
@@ -91,23 +101,25 @@
 - `category_breakdown` (JSON): Expenses grouped by category
 
 **Relationships**:
+
 - Derived from Transaction entities (not a stored entity)
 
 **Calculation Logic**:
+
 ```python
 def calculate_summary(user_id: int, period: str) -> FinancialSummary:
     start, end = get_period_dates(period)
     transactions = get_transactions(user_id, start, end)
-    
+
     total_income = sum(t.amount for t in transactions if t.type == "income")
     total_expenses = sum(t.amount for t in transactions if t.type == "expense")
     net_balance = total_income - total_expenses
-    
+
     category_breakdown = {}
     for t in transactions:
         if t.type == "expense":
             category_breakdown[t.category] = category_breakdown.get(t.category, 0) + t.amount
-    
+
     return FinancialSummary(
         user_id=user_id,
         period=period,
@@ -120,6 +132,7 @@ def calculate_summary(user_id: int, period: str) -> FinancialSummary:
 ```
 
 **Caching Strategy**:
+
 - Cache results in Redis for 5 minutes (key: `summary:{user_id}:{period}`)
 - Invalidate cache when new transaction added
 
@@ -130,6 +143,7 @@ def calculate_summary(user_id: int, period: str) -> FinancialSummary:
 **Purpose**: User session state for conversation management
 
 **Attributes**:
+
 - `user_id` (BigInteger, Primary Key): Telegram user ID
 - `conversation_state` (String, Optional): Current conversation state (FSM state)
 - `navigation_stack` (JSON): Stack of screens for back navigation
@@ -138,19 +152,23 @@ def calculate_summary(user_id: int, period: str) -> FinancialSummary:
 - `created_at` (DateTime): Session creation timestamp
 
 **Relationships**:
+
 - One-to-One with User (user has one active session)
 
 **Validation Rules**:
+
 - `navigation_stack` must be array of strings
 - `context_data` must be valid JSON object
 - `last_activity` updated on every interaction
 
 **Storage**:
+
 - Stored in Redis (not database) for fast access
 - TTL: 1 hour (expires if inactive)
 - Key format: `session:{user_id}`
 
 **Navigation Stack Example**:
+
 ```json
 {
   "navigation_stack": ["main_menu", "add_transaction", "transaction_type"]
@@ -164,6 +182,7 @@ def calculate_summary(user_id: int, period: str) -> FinancialSummary:
 **Purpose**: Predefined transaction categories
 
 **Attributes**:
+
 - `id` (Integer, Primary Key): Category ID
 - `name` (String(100), Unique): Category name
 - `type` (Enum: "income" | "expense"): Applicable transaction type
@@ -173,6 +192,7 @@ def calculate_summary(user_id: int, period: str) -> FinancialSummary:
 **Default Categories**:
 
 **Income**:
+
 - Salary 💰
 - Freelance 💼
 - Investment 📈
@@ -180,6 +200,7 @@ def calculate_summary(user_id: int, period: str) -> FinancialSummary:
 - Other ➕
 
 **Expense**:
+
 - Food & Dining 🍔
 - Transportation 🚗
 - Shopping 🛒
@@ -190,6 +211,7 @@ def calculate_summary(user_id: int, period: str) -> FinancialSummary:
 - Other ➖
 
 **Relationships**:
+
 - Referenced by Transaction.category (string match, not foreign key)
 
 ---
@@ -197,6 +219,7 @@ def calculate_summary(user_id: int, period: str) -> FinancialSummary:
 ## Data Validation Rules
 
 ### Transaction Amount Validation
+
 ```python
 def validate_amount(amount: str) -> Decimal:
     """Validate and parse transaction amount."""
@@ -212,22 +235,24 @@ def validate_amount(amount: str) -> Decimal:
 ```
 
 ### Category Validation
+
 ```python
 def validate_category(category: str, transaction_type: str) -> str:
     """Validate category exists and matches transaction type."""
     category = category.strip()
     if len(category) == 0 or len(category) > 100:
         raise ValidationError("Category must be 1-100 characters")
-    
+
     # Check if system category exists and matches type
     system_category = get_system_category(category)
     if system_category and system_category.type != transaction_type:
         raise ValidationError(f"Category '{category}' is for {system_category.type}, not {transaction_type}")
-    
+
     return category
 ```
 
 ### Timestamp Validation
+
 ```python
 def validate_timestamp(timestamp_str: str, user_timezone: str) -> datetime:
     """Validate and parse timestamp with timezone."""
@@ -245,11 +270,13 @@ def validate_timestamp(timestamp_str: str, user_timezone: str) -> datetime:
 ## Database Schema
 
 ### Migration Strategy
+
 - Use Alembic for database migrations
 - Version control all schema changes
 - Support rollback for production deployments
 
 ### Initial Schema
+
 ```sql
 -- Users table
 CREATE TABLE users (
@@ -302,6 +329,7 @@ CREATE TABLE categories (
 ### Transaction Queries
 
 **Get user transactions (paginated)**:
+
 ```python
 def get_user_transactions(
     user_id: int,
@@ -314,7 +342,7 @@ def get_user_transactions(
         Transaction.user_id == user_id,
         Transaction.deleted_at.is_(None)
     )
-    
+
     if filters:
         if filters.get("type"):
             query = query.filter(Transaction.type == filters["type"])
@@ -324,24 +352,25 @@ def get_user_transactions(
             query = query.filter(Transaction.timestamp >= filters["start_date"])
         if filters.get("end_date"):
             query = query.filter(Transaction.timestamp <= filters["end_date"])
-    
+
     return query.order_by(Transaction.timestamp.desc()).offset(
         (page - 1) * per_page
     ).limit(per_page).all()
 ```
 
 **Get financial summary**:
+
 ```python
 def get_financial_summary(user_id: int, period: str) -> FinancialSummary:
     """Calculate financial summary for period."""
     start_date, end_date = get_period_dates(period)
-    
+
     transactions = session.query(Transaction).filter(
         Transaction.user_id == user_id,
         Transaction.timestamp.between(start_date, end_date),
         Transaction.deleted_at.is_(None)
     ).all()
-    
+
     return calculate_summary(transactions, period)
 ```
 
@@ -349,7 +378,7 @@ def get_financial_summary(user_id: int, period: str) -> FinancialSummary:
 
 ## Data Integrity Constraints
 
-1. **Referential Integrity**: 
+1. **Referential Integrity**:
    - Transaction.user_id must reference existing User.id
    - Cascade delete: Deleting user deletes all transactions
 
@@ -388,4 +417,3 @@ def get_financial_summary(user_id: int, period: str) -> FinancialSummary:
 ---
 
 **Status**: ✅ Complete - All entities defined with relationships, validation rules, and access patterns.
-

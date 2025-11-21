@@ -68,4 +68,3 @@ volumes:
 networks:
   financialassist-network:
     driver: bridge
-

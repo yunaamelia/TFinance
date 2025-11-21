@@ -45,4 +45,3 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         welcome_message,
         reply_markup=keyboard,
     )
-

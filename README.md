@@ -37,39 +37,39 @@ git clone <repository-url>
 cd financialassist
 ```
 
-2. Create virtual environment:
+1. Create virtual environment:
 
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-3. Install dependencies:
+1. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Configure environment:
+1. Configure environment:
 
 ```bash
 cp .env.example .env
 # Edit .env with your credentials
 ```
 
-5. Run database migrations:
+1. Run database migrations:
 
 ```bash
 alembic upgrade head
 ```
 
-6. Seed default categories:
+1. Seed default categories:
 
 ```bash
 python scripts/seed_categories.py
 ```
 
-7. Start the bot:
+1. Start the bot:
 
 ```bash
 python -m src.bot.main

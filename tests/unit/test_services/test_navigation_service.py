@@ -1,7 +1,8 @@
 """Unit tests for NavigationService."""
 
+from unittest.mock import AsyncMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 
 from src.bot.services.navigation_service import NavigationService
 from src.bot.utils.errors import NavigationError
@@ -144,4 +145,3 @@ class TestNavigationService:
 
         previous = await navigation_service.navigate_back(user_id)
         assert previous == "add_transaction"
-

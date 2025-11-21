@@ -1,15 +1,15 @@
 """Integration tests for summary viewing flow."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
-from telegram import Update, Message, User as TelegramUser, Chat
+import pytest
+from telegram import Chat, Message, Update
+from telegram import User as TelegramUser
 from telegram.ext import ContextTypes
 
 from src.bot.handlers.summary import (
-    start_summary,
     handle_period_selection,
-    handle_view_transactions,
+    start_summary,
 )
 
 
@@ -47,7 +47,7 @@ class TestSummaryFlow:
         mock_update.callback_query = MagicMock()
         mock_update.callback_query.edit_message_text = AsyncMock()
 
-        result = await start_summary(mock_update, mock_context)
+        await start_summary(mock_update, mock_context)
 
         mock_update.callback_query.edit_message_text.assert_called_once()
         call_args = mock_update.callback_query.edit_message_text.call_args
@@ -60,8 +60,7 @@ class TestSummaryFlow:
         mock_update.callback_query.data = "period:month"
         mock_update.callback_query.edit_message_text = AsyncMock()
 
-        result = await handle_period_selection(mock_update, mock_context)
+        await handle_period_selection(mock_update, mock_context)
 
         assert mock_context.user_data.get("selected_period") == "month"
         mock_update.callback_query.edit_message_text.assert_called_once()
-

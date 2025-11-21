@@ -1,12 +1,13 @@
 """Integration tests for AI conversation flow."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from telegram import Update, Message, User as TelegramUser, Chat
+import pytest
+from telegram import Chat, Message, Update
+from telegram import User as TelegramUser
 from telegram.ext import ContextTypes
 
-from src.bot.handlers.ai_chat import start_ai_chat, handle_ai_message
+from src.bot.handlers.ai_chat import handle_ai_message, start_ai_chat
 
 
 class TestAIConversationFlow:
@@ -43,7 +44,7 @@ class TestAIConversationFlow:
         mock_update.callback_query = MagicMock()
         mock_update.callback_query.edit_message_text = AsyncMock()
 
-        result = await start_ai_chat(mock_update, mock_context)
+        await start_ai_chat(mock_update, mock_context)
 
         # Verify message was sent
         mock_update.callback_query.edit_message_text.assert_called_once()
@@ -64,11 +65,10 @@ class TestAIConversationFlow:
 
         mock_update.message.reply_text = AsyncMock()
 
-        result = await handle_ai_message(mock_update, mock_context)
+        await handle_ai_message(mock_update, mock_context)
 
         # Verify AI service was called
         mock_ai_service.generate_response.assert_called_once()
 
         # Verify response was sent
         mock_update.message.reply_text.assert_called_once()
-

@@ -23,4 +23,3 @@ def build_main_menu_keyboard() -> InlineKeyboardMarkup:
         buttons.append(nav_row)
 
     return InlineKeyboardMarkup(buttons)
-

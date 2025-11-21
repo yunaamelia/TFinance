@@ -2,7 +2,7 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import AsyncIterator, Dict, List, Optional
+from collections.abc import AsyncIterator
 
 from openai import AsyncOpenAI
 from openai.types.chat import ChatCompletionMessageParam
@@ -98,12 +98,8 @@ class OpenAIService(AIService):
         if transactions:
             summary_parts.append(f"Recent transactions: {len(transactions)}")
             # Summarize recent transactions
-            income_total = sum(
-                t.amount for t in transactions if t.type == "income"
-            )
-            expense_total = sum(
-                t.amount for t in transactions if t.type == "expense"
-            )
+            income_total = sum(t.amount for t in transactions if t.type == "income")
+            expense_total = sum(t.amount for t in transactions if t.type == "expense")
             if income_total > 0:
                 summary_parts.append(
                     f"Recent income: {format_currency(income_total)}",
@@ -121,7 +117,7 @@ class OpenAIService(AIService):
 
     def _build_recent_transactions_summary(
         self,
-        transactions: List[Transaction],
+        transactions: list[Transaction],
     ) -> str:
         """Build summary of recent transactions.
 
@@ -218,7 +214,7 @@ class OpenAIService(AIService):
 
             # Build conversation history
             conversation_history = user_context.get("conversation_history", [])
-            messages: List[ChatCompletionMessageParam] = [
+            messages: list[ChatCompletionMessageParam] = [
                 {"role": "system", "content": system_prompt},
             ]
 
@@ -292,4 +288,3 @@ class OpenAIService(AIService):
             raise AIServiceError(
                 f"Failed to analyze spending patterns: {str(e)}",
             ) from e
-

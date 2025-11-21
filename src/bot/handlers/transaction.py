@@ -2,21 +2,25 @@
 
 import logging
 from datetime import datetime
-from decimal import Decimal
 
 from telegram import Update
-from telegram.ext import ContextTypes, ConversationHandler
-from telegram.ext import CallbackQueryHandler, MessageHandler, filters
+from telegram.ext import (
+    CallbackQueryHandler,
+    ContextTypes,
+    ConversationHandler,
+    MessageHandler,
+    filters,
+)
 
 from src.bot.config.settings import get_async_session_maker, get_redis_client
 from src.bot.keyboards.builder import build_category_keyboard, build_transaction_type_keyboard
 from src.bot.keyboards.main_menu import build_main_menu_keyboard
-from src.bot.models.category import Category, CategoryType
+from src.bot.models.category import Category
 from src.bot.models.user import User
 from src.bot.services.navigation_service import NavigationService
 from src.bot.services.transaction_service import TransactionService
 from src.bot.utils.errors import ValidationError
-from src.bot.utils.formatters import format_transaction, format_currency
+from src.bot.utils.formatters import format_currency, format_transaction
 
 logger = logging.getLogger(__name__)
 
@@ -115,14 +119,12 @@ async def handle_transaction_amount(
 
             query = select(Category).where(
                 Category.type == transaction_type,
-                Category.is_system == True,
+                Category.is_system,
             )
             result = await session.execute(query)
             categories = result.scalars().all()
 
-            category_list = [
-                {"name": cat.name, "icon": cat.icon or "📁"} for cat in categories
-            ]
+            category_list = [{"name": cat.name, "icon": cat.icon or "📁"} for cat in categories]
 
         keyboard = build_category_keyboard(
             category_list,
@@ -132,8 +134,7 @@ async def handle_transaction_amount(
 
         amount_str = format_currency(amount)
         await update.message.reply_text(
-            f"✅ Amount: {amount_str}\n\n"
-            "Select a category:",
+            f"✅ Amount: {amount_str}\n\nSelect a category:",
             reply_markup=keyboard,
         )
 
@@ -173,8 +174,7 @@ async def handle_transaction_category(
     context.user_data["category"] = category_name
 
     await query.edit_message_text(
-        f"✅ Category: {category_name}\n\n"
-        "Enter description (optional, or send /skip):",
+        f"✅ Category: {category_name}\n\nEnter description (optional, or send /skip):",
     )
 
     return TRANSACTION_DESCRIPTION
@@ -202,8 +202,7 @@ async def handle_custom_category(
         context.user_data["category"] = validated_category
 
         await update.message.reply_text(
-            f"✅ Category: {validated_category}\n\n"
-            "Enter description (optional, or send /skip):",
+            f"✅ Category: {validated_category}\n\nEnter description (optional, or send /skip):",
         )
 
         return TRANSACTION_DESCRIPTION
@@ -366,4 +365,3 @@ transaction_conversation_handler = ConversationHandler(
         MessageHandler(filters.COMMAND, cancel_transaction),
     ],
 )
-

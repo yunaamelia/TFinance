@@ -1,18 +1,19 @@
 """E2E tests for complete transaction recording journey."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
-from telegram import Update, Message, User as TelegramUser, Chat
+import pytest
+from telegram import Chat, Message, Update
+from telegram import User as TelegramUser
 from telegram.ext import Application, ContextTypes
 
 from src.bot.handlers.start import start_command
 from src.bot.handlers.transaction import (
-    handle_transaction_type,
+    confirm_transaction,
     handle_transaction_amount,
     handle_transaction_category,
     handle_transaction_description,
-    confirm_transaction,
+    handle_transaction_type,
 )
 
 
@@ -65,4 +66,3 @@ class TestTransactionRecordingJourney:
         assert callable(handle_transaction_category)
         assert callable(handle_transaction_description)
         assert callable(confirm_transaction)
-

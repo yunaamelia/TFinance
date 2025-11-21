@@ -12,9 +12,11 @@
 ### Methods
 
 #### `create_transaction(user_id: int, transaction_data: dict) -> Transaction`
+
 **Description**: Create a new transaction for a user
 
 **Parameters**:
+
 - `user_id` (int): Telegram user ID
 - `transaction_data` (dict): Transaction data
   - `amount` (Decimal): Transaction amount (required, > 0)
@@ -26,10 +28,12 @@
 **Returns**: `Transaction` object
 
 **Raises**:
+
 - `ValidationError`: If input validation fails
 - `DatabaseError`: If database operation fails
 
 **Example**:
+
 ```python
 transaction = await transaction_service.create_transaction(
     user_id=123456789,
@@ -44,9 +48,11 @@ transaction = await transaction_service.create_transaction(
 ```
 
 #### `get_transactions(user_id: int, filters: dict = None, page: int = 1, per_page: int = 20) -> List[Transaction]`
+
 **Description**: Get paginated list of user transactions
 
 **Parameters**:
+
 - `user_id` (int): Telegram user ID
 - `filters` (dict, optional): Filter criteria
   - `type` (str, optional): "income" or "expense"
@@ -59,18 +65,22 @@ transaction = await transaction_service.create_transaction(
 **Returns**: List of `Transaction` objects
 
 **Raises**:
+
 - `DatabaseError`: If database operation fails
 
 #### `get_transaction_by_id(user_id: int, transaction_id: int) -> Transaction | None`
+
 **Description**: Get a specific transaction by ID
 
 **Parameters**:
+
 - `user_id` (int): Telegram user ID
 - `transaction_id` (int): Transaction ID
 
 **Returns**: `Transaction` object or `None` if not found
 
 **Raises**:
+
 - `DatabaseError`: If database operation fails
 
 ---
@@ -82,9 +92,11 @@ transaction = await transaction_service.create_transaction(
 ### Methods
 
 #### `generate_response(user_message: str, user_context: dict, stream: bool = False) -> AsyncIterator[str] | str`
+
 **Description**: Generate AI response with JARVIS persona
 
 **Parameters**:
+
 - `user_message` (str): User's message/query
 - `user_context` (dict): User context data
   - `user_id` (int): User ID
@@ -93,15 +105,18 @@ transaction = await transaction_service.create_transaction(
   - `conversation_history` (List[dict], optional): Previous messages
 - `stream` (bool): Whether to stream response (default: False)
 
-**Returns**: 
+**Returns**:
+
 - If `stream=True`: `AsyncIterator[str]` (token stream)
 - If `stream=False`: `str` (complete response)
 
 **Raises**:
+
 - `AIServiceError`: If AI API call fails
 - `TimeoutError`: If response takes > 3 seconds
 
 **Example**:
+
 ```python
 response = await ai_service.generate_response(
     user_message="What did I spend most on this month?",
@@ -115,18 +130,22 @@ response = await ai_service.generate_response(
 ```
 
 #### `analyze_spending_pattern(user_id: int, period: str) -> dict`
+
 **Description**: Analyze user's spending patterns
 
 **Parameters**:
+
 - `user_id` (int): User ID
 - `period` (str): Time period ("today", "week", "month")
 
 **Returns**: Analysis dictionary
+
 - `top_categories` (List[dict]): Top spending categories
 - `trends` (dict): Spending trends
 - `recommendations` (List[str]): Personalized recommendations
 
 **Raises**:
+
 - `AIServiceError`: If analysis fails
 
 ---
@@ -138,22 +157,27 @@ response = await ai_service.generate_response(
 ### Methods
 
 #### `get_financial_summary(user_id: int, period: str) -> FinancialSummary`
+
 **Description**: Get financial summary for a time period
 
 **Parameters**:
+
 - `user_id` (int): User ID
 - `period` (str): Time period ("today", "week", "month", "custom")
 
 **Returns**: `FinancialSummary` object
 
-**Performance**: 
+**Performance**:
+
 - Cached in Redis for 5 minutes
 - Database query < 100ms
 
 **Raises**:
+
 - `DatabaseError`: If database operation fails
 
 **Example**:
+
 ```python
 summary = await summary_service.get_financial_summary(
     user_id=123456789,
@@ -168,13 +192,16 @@ summary = await summary_service.get_financial_summary(
 ```
 
 #### `get_category_breakdown(user_id: int, period: str) -> dict`
+
 **Description**: Get expenses grouped by category
 
 **Parameters**:
+
 - `user_id` (int): User ID
 - `period` (str): Time period
 
 **Returns**: Dictionary mapping category names to amounts
+
 ```python
 {
     "Food & Dining": 1500000.00,
@@ -192,43 +219,53 @@ summary = await summary_service.get_financial_summary(
 ### Methods
 
 #### `get_navigation_state(user_id: int) -> NavigationState`
+
 **Description**: Get user's current navigation state
 
 **Parameters**:
+
 - `user_id` (int): User ID
 
 **Returns**: `NavigationState` object
 
 #### `navigate_to(user_id: int, screen: str) -> None`
+
 **Description**: Navigate to a new screen
 
 **Parameters**:
+
 - `user_id` (int): User ID
 - `screen` (str): Screen identifier (e.g., "add_transaction", "view_summary")
 
 **Side Effects**: Updates navigation stack in Redis
 
 #### `navigate_back(user_id: int) -> str`
+
 **Description**: Navigate back to previous screen
 
 **Parameters**:
+
 - `user_id` (int): User ID
 
 **Returns**: Previous screen identifier
 
 **Raises**:
+
 - `NavigationError`: If already at main menu
 
 #### `build_keyboard(user_id: int, screen: str) -> InlineKeyboardMarkup`
+
 **Description**: Build inline keyboard for a screen
 
 **Parameters**:
+
 - `user_id` (int): User ID
 - `screen` (str): Screen identifier
 
 **Returns**: `InlineKeyboardMarkup` object with contextually appropriate buttons
 
 **Example**:
+
 ```python
 keyboard = await navigation_service.build_keyboard(
     user_id=123456789,
@@ -242,26 +279,34 @@ keyboard = await navigation_service.build_keyboard(
 ## Error Types
 
 ### ValidationError
+
 **Raised by**: TransactionService, Input validators
 **Attributes**:
+
 - `message` (str): Error message
 - `field` (str, optional): Field that failed validation
 
 ### DatabaseError
+
 **Raised by**: All services with database operations
 **Attributes**:
+
 - `message` (str): Error message
 - `operation` (str): Database operation that failed
 
 ### AIServiceError
+
 **Raised by**: AIService
 **Attributes**:
+
 - `message` (str): Error message
 - `status_code` (int, optional): HTTP status code from AI API
 
 ### NavigationError
+
 **Raised by**: NavigationService
 **Attributes**:
+
 - `message` (str): Error message
 
 ---
@@ -290,4 +335,3 @@ NavigationService
 ---
 
 **Status**: ✅ Complete - All service interfaces defined with method signatures, parameters, and error handling.
-

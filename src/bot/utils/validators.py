@@ -87,4 +87,3 @@ def validate_transaction_type(transaction_type: str) -> str:
         )
 
     return normalized
-

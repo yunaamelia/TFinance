@@ -1,13 +1,14 @@
 """Unit tests for TransactionService."""
 
-import pytest
 from datetime import datetime
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
-from src.bot.models.transaction import Transaction, TransactionType
+import pytest
+
+from src.bot.models.transaction import Transaction
 from src.bot.services.transaction_service import TransactionService
-from src.bot.utils.errors import DatabaseError, ValidationError
+from src.bot.utils.errors import ValidationError
 
 
 class TestTransactionService:
@@ -41,11 +42,7 @@ class TestTransactionService:
         }
 
         # Mock the created transaction
-        mock_transaction = Transaction(
-            id=1,
-            user_id=user_id,
-            **transaction_data,
-        )
+        # Note: mock_transaction is not used but kept for reference
         mock_session.add.return_value = None
         mock_session.refresh.return_value = None
 
@@ -141,4 +138,3 @@ class TestTransactionService:
 
         # Verify filters were applied
         assert isinstance(result, list)
-

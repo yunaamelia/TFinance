@@ -1,13 +1,11 @@
 """Navigation handlers for Home, Back, and Help buttons."""
 
 import logging
-from typing import Dict
 
 from telegram import Update
 from telegram.ext import ContextTypes
 
 from src.bot.config.settings import get_redis_client
-from src.bot.handlers.start import start_command
 from src.bot.keyboards.main_menu import build_main_menu_keyboard
 from src.bot.services.navigation_service import NavigationService
 from src.bot.utils.errors import NavigationError
@@ -15,7 +13,7 @@ from src.bot.utils.errors import NavigationError
 logger = logging.getLogger(__name__)
 
 # Help messages for different screens
-HELP_MESSAGES: Dict[str, str] = {
+HELP_MESSAGES: dict[str, str] = {
     "main_menu": (
         "📖 *Help - Main Menu*\n\n"
         "Welcome to FinancialAssist! Here's what you can do:\n\n"
@@ -102,10 +100,7 @@ async def handle_home(
 
     # Show main menu
     keyboard = build_main_menu_keyboard()
-    welcome_message = (
-        f"👋 Welcome back, {user.first_name}!\n\n"
-        "Choose an option below:"
-    )
+    welcome_message = f"👋 Welcome back, {user.first_name}!\n\nChoose an option below:"
 
     await query.edit_message_text(
         welcome_message,
@@ -192,8 +187,9 @@ async def handle_help(
     help_message = get_help_message(current_screen)
 
     # Build keyboard with navigation
+    from telegram import InlineKeyboardMarkup
+
     from src.bot.keyboards.navigation import build_navigation_row
-    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
     buttons = []
     nav_row = build_navigation_row(show_back=True, show_home=True, show_help=False)
@@ -207,4 +203,3 @@ async def handle_help(
         reply_markup=keyboard,
         parse_mode="Markdown",
     )
-

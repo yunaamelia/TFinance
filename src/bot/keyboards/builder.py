@@ -145,4 +145,3 @@ def build_pagination_keyboard(
         buttons.append(nav_row)
 
     return InlineKeyboardMarkup(buttons)
-

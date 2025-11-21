@@ -69,4 +69,3 @@ def build_jarvis_prompt(
         recent_transactions=recent_transactions or "No recent transactions.",
         financial_summary=financial_summary or "No financial summary available.",
     )
-

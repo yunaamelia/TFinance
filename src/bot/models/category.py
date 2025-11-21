@@ -39,4 +39,3 @@ class Category(Base):
     def __repr__(self) -> str:
         """String representation of Category."""
         return f"<Category(id={self.id}, name={self.name}, type={self.type}, is_system={self.is_system})>"
-

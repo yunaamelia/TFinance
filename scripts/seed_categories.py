@@ -8,11 +8,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.bot.config.settings import get_async_session_maker
 from src.bot.models.category import Category, CategoryType
-
 
 # Default categories
 DEFAULT_CATEGORIES = [
@@ -40,7 +38,7 @@ async def seed_categories():
 
     async with async_session_maker() as session:
         # Check if categories already exist
-        result = await session.execute(select(Category).where(Category.is_system == True))
+        result = await session.execute(select(Category).where(Category.is_system))
         existing_categories = result.scalars().all()
 
         if existing_categories:
@@ -62,4 +60,3 @@ async def seed_categories():
 
 if __name__ == "__main__":
     asyncio.run(seed_categories())
-

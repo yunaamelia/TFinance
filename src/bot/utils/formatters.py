@@ -1,8 +1,6 @@
 """Message formatting utilities for FinancialAssist bot."""
 
-from datetime import datetime
 from decimal import Decimal
-from typing import List
 
 from src.bot.models.transaction import Transaction
 
@@ -53,7 +51,7 @@ def format_transaction(transaction: Transaction, currency: str = "IDR") -> str:
 
 
 def format_transaction_list(
-    transactions: List[Transaction],
+    transactions: list[Transaction],
     currency: str = "IDR",
     page: int = 1,
     total_pages: int = 1,
@@ -165,7 +163,7 @@ def format_category_breakdown(
 
 
 def format_transaction_list_paginated(
-    transactions: List[Transaction],
+    transactions: list[Transaction],
     currency: str = "IDR",
     page: int = 1,
     per_page: int = 10,
@@ -199,4 +197,3 @@ def format_transaction_list_paginated(
         lines.append(f"\n📄 Showing {len(transactions)} of {total_count} transactions")
 
     return "\n".join(lines)
-

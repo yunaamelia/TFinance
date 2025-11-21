@@ -1,14 +1,30 @@
 """Transaction model for financial transactions."""
 
+from __future__ import annotations
+
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, CheckConstraint, DateTime, Enum, Integer, Numeric, String, Text, JSON, ForeignKey
+from sqlalchemy import (
+    JSON,
+    BigInteger,
+    CheckConstraint,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from src.bot.models import Base
+
+if TYPE_CHECKING:
+    from src.bot.models.user import User
 
 
 class TransactionType:
@@ -45,7 +61,7 @@ class Transaction(Base):
         index=True,
     )
     category: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     timestamp: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -53,7 +69,7 @@ class Transaction(Base):
     )
 
     # Additional metadata
-    tags: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    tags: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(
@@ -67,10 +83,10 @@ class Transaction(Base):
         onupdate=func.now(),
         nullable=False,
     )
-    deleted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships
-    user: Mapped["User"] = relationship(
+    user: Mapped[User] = relationship(
         "User",
         back_populates="transactions",
         lazy="select",
@@ -89,4 +105,3 @@ class Transaction(Base):
             f"<Transaction(id={self.id}, user_id={self.user_id}, "
             f"type={self.type}, amount={self.amount}, category={self.category})>"
         )
-

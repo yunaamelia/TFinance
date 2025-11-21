@@ -36,4 +36,3 @@ class NavigationError(FinancialAssistError):
     """Raised when navigation operation fails."""
 
     pass
-
