@@ -118,27 +118,52 @@ class TestEdgeCases:
         mock_message.from_user = mock_update.message.from_user
         object.__setattr__(mock_update, "message", mock_message)
 
+        # Mock context.bot.send_chat_action
+        mock_context.bot = MagicMock()
+        mock_context.bot.send_chat_action = AsyncMock()
+
+        # Mock processing message (returned by reply_text)
+        mock_processing_msg = MagicMock()
+        mock_processing_msg.edit_text = AsyncMock()
+        mock_processing_msg.delete = AsyncMock()
+        mock_message.reply_text.return_value = mock_processing_msg
+
+        # Mock User model query
+        mock_user_result = MagicMock()
+        mock_user_result.scalar_one_or_none = AsyncMock(return_value=None)  # User doesn't exist
+        mock_db_session.execute = AsyncMock(return_value=mock_user_result)
+        # Also mock commit for user creation
+        mock_db_session.commit = AsyncMock()
+
+        # Mock get_redis_client
+        async def get_redis_mock():
+            return AsyncMock()
+
+        mock_redis.side_effect = get_redis_mock
+
         # Should handle error gracefully
         await handle_ai_message(mock_update, mock_context)
 
-        # Error message should be sent to user
-        mock_message.reply_text.assert_called()
-        call_args = mock_message.reply_text.call_args[0][0]
-        # Check for error indicators (unavailable, error, difficulties, etc.)
-        assert any(
-            word in call_args.lower()
-            for word in ["unavailable", "error", "difficulties", "try again"]
-        )
+        # Error message should be sent to user (either via edit_text or reply_text)
+        # Check if processing message was edited with error or new message was sent
+        if mock_processing_msg.edit_text.called:
+            call_args = mock_processing_msg.edit_text.call_args[0][0]
+            assert any(
+                word in call_args.lower()
+                for word in ["unavailable", "error", "difficulties", "try again"]
+            )
+        else:
+            mock_message.reply_text.assert_called()
+            call_args = mock_message.reply_text.call_args[0][0]
+            assert any(
+                word in call_args.lower()
+                for word in ["unavailable", "error", "difficulties", "try again"]
+            )
 
     @pytest.mark.asyncio
     @patch("src.bot.handlers.transaction.get_async_session_maker")
     async def test_database_error_handling(self, mock_session, mock_update, mock_context):
         """Test handling of database errors."""
-        # Mock database to raise error
-        mock_session.return_value.__aenter__.side_effect = DatabaseError(
-            "Database connection failed", operation="connect"
-        )
-
         mock_context.user_data["transaction_type"] = "expense"
 
         mock_message = MagicMock(spec=Message)
@@ -148,11 +173,24 @@ class TestEdgeCases:
         mock_message.from_user = mock_update.message.from_user
         object.__setattr__(mock_update, "message", mock_message)
 
+        # Mock database session to raise error when executing query
+        mock_db_session = AsyncMock()
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = []  # Empty categories list
+        mock_db_session.execute = AsyncMock(
+            side_effect=DatabaseError("Database connection failed", operation="query")
+        )
+        mock_session.return_value.__aenter__.return_value = mock_db_session
+        mock_session.return_value.__aexit__.return_value = None
+
         # Should handle database error gracefully
-        # (In real implementation, this would be caught by error handler)
-        # For now, we verify the error is raised
-        with pytest.raises((DatabaseError, Exception)):
-            await handle_transaction_amount(mock_update, mock_context)
+        # The handler should catch the error and show error message to user
+        result = await handle_transaction_amount(mock_update, mock_context)
+
+        # Should return to same state (TRANSACTION_AMOUNT) and show error
+        assert result is not None
+        # Error message should be sent to user
+        mock_message.reply_text.assert_called()
 
     @pytest.mark.asyncio
     async def test_empty_category_input(self, mock_update, mock_context):

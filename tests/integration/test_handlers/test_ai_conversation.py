@@ -99,10 +99,35 @@ class TestAIConversationFlow:
         mock_message.from_user = mock_update.message.from_user
         object.__setattr__(mock_update, "message", mock_message)
 
+        # Mock context.bot.send_chat_action
+        mock_context.bot = MagicMock()
+        mock_context.bot.send_chat_action = AsyncMock()
+
+        # Mock processing message (returned by reply_text)
+        mock_processing_msg = MagicMock()
+        mock_processing_msg.edit_text = AsyncMock()
+        mock_processing_msg.delete = AsyncMock()
+        mock_message.reply_text.return_value = mock_processing_msg
+
+        # Mock User model query
+
+        mock_user_result = MagicMock()
+        mock_user_result.scalar_one_or_none = AsyncMock(return_value=None)  # User doesn't exist
+        # Ensure execute returns the result synchronously (not a coroutine)
+        mock_db_session.execute = AsyncMock(return_value=mock_user_result)
+        # Also mock commit for user creation
+        mock_db_session.commit = AsyncMock()
+
         await handle_ai_message(mock_update, mock_context)
+
+        # Verify typing indicator was sent
+        mock_context.bot.send_chat_action.assert_called_once()
+
+        # Verify processing message was sent
+        mock_message.reply_text.assert_called()
 
         # Verify AI service was called
         mock_ai_service.generate_response.assert_called_once()
 
-        # Verify response was sent
-        mock_message.reply_text.assert_called_once()
+        # Verify processing message was edited with response
+        mock_processing_msg.edit_text.assert_called_once()
