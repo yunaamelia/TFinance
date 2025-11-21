@@ -1,6 +1,7 @@
 """Summary viewing handlers."""
 
 import logging
+import warnings
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
@@ -10,6 +11,7 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+from telegram.warnings import PTBUserWarning
 
 from src.bot.config.settings import get_async_session_maker, get_redis_client
 from src.bot.keyboards.builder import build_pagination_keyboard, build_period_selector_keyboard
@@ -24,6 +26,10 @@ from src.bot.utils.formatters import (
     format_summary,
     format_transaction_list_paginated,
 )
+
+# Filter PTBUserWarning about CallbackQueryHandler in ConversationHandler
+# This warning is informational and can be safely ignored
+warnings.simplefilter("ignore", PTBUserWarning)
 
 logger = logging.getLogger(__name__)
 
@@ -290,4 +296,6 @@ summary_conversation_handler = ConversationHandler(
         MessageHandler(filters.COMMAND, cancel_summary),
     ],
     per_chat=True,
+    per_user=True,
+    per_message=False,  # Explicitly set to avoid warning (callback queries tracked per update, not per message)
 )

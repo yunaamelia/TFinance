@@ -19,6 +19,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         update: Telegram update object
         context: Bot context
     """
+    logger.info(f"🚀 /start command received from user {update.effective_user.id}")
     user = update.effective_user
 
     # Reset navigation state
@@ -41,7 +42,22 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     keyboard = build_main_menu_keyboard()
 
-    await update.message.reply_text(
-        welcome_message,
-        reply_markup=keyboard,
-    )
+    try:
+        logger.info(f"📤 Sending welcome message to user {user.id}")
+        if not update.message:
+            logger.error("❌ update.message is None!")
+            return
+
+        await update.message.reply_text(
+            welcome_message,
+            reply_markup=keyboard,
+        )
+        logger.info(f"✅ Welcome message sent successfully to user {user.id}")
+    except Exception as e:
+        logger.error(f"❌ Failed to send welcome message: {e}", exc_info=True)
+        # Try to send error message
+        try:
+            if update.message:
+                await update.message.reply_text("❌ An error occurred. Please try again later.")
+        except Exception as e2:
+            logger.error(f"❌ Failed to send error message: {e2}", exc_info=True)

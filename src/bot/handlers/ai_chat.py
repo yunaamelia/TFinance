@@ -1,8 +1,10 @@
 """AI chat handlers for JARVIS conversation."""
 
 import logging
+import warnings
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.constants import ChatAction
 from telegram.ext import (
     CallbackQueryHandler,
     ContextTypes,
@@ -10,6 +12,7 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+from telegram.warnings import PTBUserWarning
 
 from src.bot.config.persona import JARVIS_PERSONA_V1
 from src.bot.config.settings import get_async_session_maker, get_redis_client
@@ -21,10 +24,14 @@ from src.bot.services.navigation_service import NavigationService
 from src.bot.services.transaction_service import TransactionService
 from src.bot.utils.errors import AIServiceError
 
+# Filter PTBUserWarning about CallbackQueryHandler in ConversationHandler
+# This warning is informational and can be safely ignored
+warnings.simplefilter("ignore", PTBUserWarning)
+
 logger = logging.getLogger(__name__)
 
 # Conversation state
-AI_CHAT = range(1)
+AI_CHAT = 1
 
 
 def get_ai_service() -> OpenAIService:
@@ -80,12 +87,15 @@ async def start_ai_chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
 
     keyboard = InlineKeyboardMarkup(buttons)
 
+    logger.info(f"🤖 Starting AI chat for user {user.id}")
+
     await query.edit_message_text(
         welcome_message,
         reply_markup=keyboard,
         parse_mode="Markdown",
     )
 
+    logger.info(f"✅ AI chat started, waiting for user input. State: {AI_CHAT}")
     return AI_CHAT
 
 
@@ -103,7 +113,29 @@ async def handle_ai_message(
         Conversation state (continue or end)
     """
     user = update.effective_user
+
+    if not update.message or not update.message.text:
+        logger.error("❌ No message or text found in AI chat update")
+        return AI_CHAT
+
     user_message = update.message.text
+    logger.info(f"🤖 Received AI chat message from user {user.id}: {user_message[:50]}")
+
+    # Show typing indicator to let user know we're processing
+    await context.bot.send_chat_action(
+        chat_id=update.effective_chat.id,
+        action=ChatAction.TYPING,
+    )
+
+    # Send processing message
+    processing_msg = None
+    try:
+        processing_msg = await update.message.reply_text(
+            "🤖 *JARVIS is thinking...*\n\nPlease wait while I process your request.",
+            parse_mode="Markdown",
+        )
+    except Exception as e:
+        logger.warning(f"Could not send processing message: {e}")
 
     async_session_maker = get_async_session_maker()
 
@@ -145,11 +177,15 @@ async def handle_ai_message(
             }
 
             # Get AI service and generate response
+            logger.info(f"🤖 Calling AI service for user {user.id}")
             ai_service = get_ai_service()
             response = await ai_service.generate_response(
                 user_message,
                 user_context,
                 stream=False,
+            )
+            logger.info(
+                f"✅ AI response received: {response[:100] if response else 'Empty response'}..."
             )
 
             # Update conversation history
@@ -169,8 +205,30 @@ async def handle_ai_message(
                     "conversation_history"
                 ][-10:]
 
-            # Send response
-            await update.message.reply_text(response)
+            # Update processing message with actual response
+            logger.info(f"📤 Sending AI response to user {user.id}")
+            if processing_msg:
+                try:
+                    await processing_msg.edit_text(
+                        response,
+                        parse_mode="Markdown",
+                    )
+                    logger.info("✅ AI response sent successfully (edited processing message)")
+                except Exception as e:
+                    # If editing fails (e.g., message too long), send new message
+                    logger.warning(
+                        f"Could not edit processing message: {e}. Sending new message instead."
+                    )
+                    try:
+                        await processing_msg.delete()
+                    except Exception:  # nosec B110
+                        pass  # Ignore delete errors
+                    await update.message.reply_text(response, parse_mode="Markdown")
+                    logger.info("✅ AI response sent successfully (new message)")
+            else:
+                # If processing message wasn't sent, send response directly
+                await update.message.reply_text(response, parse_mode="Markdown")
+                logger.info("✅ AI response sent successfully (direct message)")
 
             return AI_CHAT
 
@@ -180,7 +238,17 @@ async def handle_ai_message(
             "🤖 I apologize, but I'm experiencing technical difficulties. "
             "Please try again in a moment."
         )
-        await update.message.reply_text(error_message)
+        if processing_msg:
+            try:
+                await processing_msg.edit_text(error_message, parse_mode="Markdown")
+            except Exception:
+                try:
+                    await processing_msg.delete()
+                except Exception:  # nosec B110
+                    pass  # Ignore delete errors
+                await update.message.reply_text(error_message)
+        else:
+            await update.message.reply_text(error_message)
         return AI_CHAT
 
     except Exception as e:
@@ -188,7 +256,17 @@ async def handle_ai_message(
         error_message = (
             "❌ An error occurred while processing your request. Please try again later."
         )
-        await update.message.reply_text(error_message)
+        if processing_msg:
+            try:
+                await processing_msg.edit_text(error_message, parse_mode="Markdown")
+            except Exception:
+                try:
+                    await processing_msg.delete()
+                except Exception:  # nosec B110
+                    pass  # Ignore delete errors
+                await update.message.reply_text(error_message)
+        else:
+            await update.message.reply_text(error_message)
         return AI_CHAT
 
 
@@ -240,4 +318,6 @@ ai_chat_conversation_handler = ConversationHandler(
         MessageHandler(filters.COMMAND, cancel_ai_chat),
     ],
     per_chat=True,
+    per_user=True,
+    per_message=False,  # Explicitly set to avoid warning (callback queries tracked per update, not per message)
 )

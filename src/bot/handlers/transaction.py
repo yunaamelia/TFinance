@@ -1,6 +1,7 @@
 """Transaction recording handlers."""
 
 import logging
+import warnings
 from datetime import datetime
 
 from telegram import Update
@@ -11,6 +12,7 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+from telegram.warnings import PTBUserWarning
 
 from src.bot.config.settings import get_async_session_maker, get_redis_client
 from src.bot.keyboards.builder import build_category_keyboard, build_transaction_type_keyboard
@@ -21,6 +23,10 @@ from src.bot.services.navigation_service import NavigationService
 from src.bot.services.transaction_service import TransactionService
 from src.bot.utils.errors import ValidationError
 from src.bot.utils.formatters import format_currency, format_transaction
+
+# Filter PTBUserWarning about CallbackQueryHandler in ConversationHandler
+# This warning is informational and can be safely ignored
+warnings.simplefilter("ignore", PTBUserWarning)
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +50,7 @@ async def start_transaction(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         Next conversation state
     """
     user = update.effective_user
+    logger.info(f"💰 Starting transaction flow for user {user.id}")
 
     # Update navigation state
     try:
@@ -58,6 +65,9 @@ async def start_transaction(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         "💰 *Add Transaction*\n\nSelect transaction type:",
         reply_markup=keyboard,
         parse_mode="Markdown",
+    )
+    logger.info(
+        f"✅ Transaction flow started, returning TRANSACTION_TYPE state ({TRANSACTION_TYPE})"
     )
     return TRANSACTION_TYPE
 
@@ -81,12 +91,17 @@ async def handle_transaction_type(
     transaction_type = query.data.split(":")[1]  # Extract "income" or "expense"
     context.user_data["transaction_type"] = transaction_type
 
+    logger.info(
+        f"💰 Transaction type selected: {transaction_type} for user {update.effective_user.id}"
+    )
+
     await query.edit_message_text(
         f"📝 *{transaction_type.upper()} Transaction*\n\n"
         "Enter the amount (e.g., 50000 or 50,000.00):",
         parse_mode="Markdown",
     )
 
+    logger.info(f"✅ Transitioning to TRANSACTION_AMOUNT state for user {update.effective_user.id}")
     return TRANSACTION_AMOUNT
 
 
@@ -105,10 +120,16 @@ async def handle_transaction_amount(
     """
     from src.bot.utils.validators import validate_amount
 
+    logger.info(
+        f"💵 Received amount input from user {update.effective_user.id}: {update.message.text}"
+    )
+
     try:
         amount_str = update.message.text.strip()
+        logger.info(f"🔍 Validating amount: {amount_str}")
         amount = validate_amount(amount_str)
         context.user_data["amount"] = amount
+        logger.info(f"✅ Amount validated: {amount}")
 
         # Get categories for this transaction type
         transaction_type = context.user_data.get("transaction_type")
@@ -141,8 +162,20 @@ async def handle_transaction_amount(
         return TRANSACTION_CATEGORY
 
     except ValidationError as e:
+        logger.warning(
+            f"❌ Amount validation failed for user {update.effective_user.id}: {e.message}"
+        )
         await update.message.reply_text(
             f"❌ {e.message}\n\nPlease enter a valid amount:",
+        )
+        return TRANSACTION_AMOUNT
+    except Exception as e:
+        logger.error(
+            f"❌ Error in handle_transaction_amount for user {update.effective_user.id}: {e}",
+            exc_info=True,
+        )
+        await update.message.reply_text(
+            "❌ An error occurred. Please try again or use /start to restart.",
         )
         return TRANSACTION_AMOUNT
 
@@ -229,15 +262,35 @@ async def handle_transaction_description(
     """
     from src.bot.utils.sanitizer import sanitize_description
 
-    # Sanitize description input
-    description = sanitize_description(update.message.text)
+    logger.info(f"📝 Received description input from user {update.effective_user.id}")
 
-    if description.lower() in ("/skip", "skip", "-"):
-        description = None
+    try:
+        if not update.message or not update.message.text:
+            logger.error("❌ No message or text found in update")
+            await update.message.reply_text(
+                "❌ Invalid input. Please enter a description or send /skip:",
+            )
+            return TRANSACTION_DESCRIPTION
 
-    context.user_data["description"] = description
+        # Sanitize description input
+        description = sanitize_description(update.message.text)
+        logger.info(f"✅ Description sanitized: {description[:50] if description else 'None'}")
 
-    return await confirm_transaction(update, context)
+        if description.lower() in ("/skip", "skip", "-"):
+            description = None
+            logger.info("ℹ️ User skipped description")
+
+        context.user_data["description"] = description
+        logger.info("✅ Description saved, proceeding to confirm transaction")
+
+        return await confirm_transaction(update, context)
+
+    except Exception as e:
+        logger.error(f"❌ Error in handle_transaction_description: {e}", exc_info=True)
+        await update.message.reply_text(
+            "❌ An error occurred while processing description. Please try again or send /skip:",
+        )
+        return TRANSACTION_DESCRIPTION
 
 
 async def confirm_transaction(
@@ -254,6 +307,20 @@ async def confirm_transaction(
         ConversationHandler.END
     """
     user = update.effective_user
+    logger.info(f"💾 Confirming transaction for user {user.id}")
+
+    # Validate required data
+    required_fields = ["amount", "transaction_type", "category"]
+    missing_fields = [field for field in required_fields if field not in context.user_data]
+
+    if missing_fields:
+        logger.error(f"❌ Missing required fields: {missing_fields}")
+        await update.message.reply_text(
+            f"❌ Missing required data: {', '.join(missing_fields)}. Please start over with /start",
+        )
+        context.user_data.clear()
+        return ConversationHandler.END
+
     async_session_maker = get_async_session_maker()
 
     try:
@@ -266,6 +333,7 @@ async def confirm_transaction(
             db_user = result.scalar_one_or_none()
 
             if not db_user:
+                logger.info(f"👤 Creating new user: {user.id}")
                 db_user = User(
                     id=user.id,
                     first_name=user.first_name or "User",
@@ -284,7 +352,9 @@ async def confirm_transaction(
                 "timestamp": datetime.now(),
             }
 
+            logger.info(f"💾 Saving transaction: {transaction_data}")
             transaction = await service.create_transaction(user.id, transaction_data)
+            logger.info(f"✅ Transaction saved with ID: {transaction.id}")
 
             # Format confirmation message
             confirmation = (
@@ -302,14 +372,16 @@ async def confirm_transaction(
 
             # Clear user data
             context.user_data.clear()
+            logger.info(f"✅ Transaction flow completed for user {user.id}")
 
             return ConversationHandler.END
 
     except Exception as e:
-        logger.error(f"Error saving transaction: {e}", exc_info=True)
+        logger.error(f"❌ Error saving transaction: {e}", exc_info=True)
         await update.message.reply_text(
-            "❌ Error saving transaction. Please try again.",
+            "❌ Error saving transaction. Please try again or use /start to restart.",
         )
+        context.user_data.clear()
         return ConversationHandler.END
 
 
@@ -368,4 +440,6 @@ transaction_conversation_handler = ConversationHandler(
         MessageHandler(filters.COMMAND, cancel_transaction),
     ],
     per_chat=True,
+    per_user=True,
+    per_message=False,  # Explicitly set to avoid warning (callback queries tracked per update, not per message)
 )

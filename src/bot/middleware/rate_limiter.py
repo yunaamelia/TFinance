@@ -113,24 +113,28 @@ class RateLimiter:
 _rate_limiter = RateLimiter()
 
 
-async def check_rate_limit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+async def check_rate_limit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Check rate limit before processing update.
+
+    This function is used as a MessageHandler. In python-telegram-bot,
+    handlers that return None allow the handler chain to continue.
+    If rate limited, we send a message but still return None to allow
+    other handlers to process (though they may choose to skip based on context).
 
     Args:
         update: Telegram update
         context: Bot context
-
-    Returns:
-        True if request should proceed, False if rate limited
     """
     if not update.effective_user:
-        return True
+        logger.debug("Rate limit check: No effective user, allowing")
+        return
 
     user_id = update.effective_user.id
+    logger.debug(f"Rate limit check for user {user_id}")
     allowed, error_message = await _rate_limiter.check_rate_limit(user_id)
 
     if not allowed:
-        logger.warning(f"Rate limit exceeded for user {user_id}")
+        logger.warning(f"⚠️ Rate limit exceeded for user {user_id}: {error_message}")
         if update.effective_message:
             try:
                 await update.effective_message.reply_text(
@@ -138,9 +142,11 @@ async def check_rate_limit(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 )
             except Exception as e:
                 logger.error(f"Failed to send rate limit message: {e}")
-        return False
+        # Don't return False - let handler chain continue
+        # Rate limiting message already sent to user
+        return
 
-    return True
+    logger.debug(f"✅ Rate limit check passed for user {user_id}")
 
 
 async def handle_telegram_retry_after(func, *args, max_retries: int = 3, **kwargs):
