@@ -85,25 +85,32 @@ class TestAIInsightsJourney:
         # Create a mock message with reply_text
         mock_message = MagicMock(spec=Message)
         mock_message.text = "What did I spend most on this month?"
-        mock_message.reply_text = AsyncMock()
         mock_message.chat = chat
         mock_message.from_user = telegram_user
         object.__setattr__(update, "message", mock_message)
-
-        # Mock context.bot.send_chat_action
-        context.bot = MagicMock()
-        context.bot.send_chat_action = AsyncMock()
 
         # Mock processing message (returned by reply_text)
         mock_processing_msg = MagicMock()
         mock_processing_msg.edit_text = AsyncMock()
         mock_processing_msg.delete = AsyncMock()
-        mock_message.reply_text.return_value = mock_processing_msg
+
+        # Mock reply_text using AsyncMock with return_value
+        mock_message.reply_text = AsyncMock(return_value=mock_processing_msg)
+
+        # Mock context.bot.send_chat_action
+        context.bot = MagicMock()
+        context.bot.send_chat_action = AsyncMock()
 
         # Mock User model query
         mock_user_result = MagicMock()
-        mock_user_result.scalar_one_or_none = AsyncMock(return_value=None)  # User doesn't exist
-        mock_db_session.execute = AsyncMock(return_value=mock_user_result)
+        # scalar_one_or_none() is synchronous, not async
+        mock_user_result.scalar_one_or_none.return_value = None  # User doesn't exist
+
+        # execute() is async, so use async function but ensure it returns the result immediately
+        async def mock_execute(query):
+            return mock_user_result
+
+        mock_db_session.execute = mock_execute
         # Also mock commit for user creation
         mock_db_session.commit = AsyncMock()
 
