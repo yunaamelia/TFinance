@@ -24,7 +24,7 @@ from sqlalchemy.sql import func
 from src.bot.models import Base
 
 if TYPE_CHECKING:
-    from src.bot.models.user import User
+    from src.bot.models.user import User  # noqa: F401
 
 
 class TransactionType:

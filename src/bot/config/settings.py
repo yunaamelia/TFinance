@@ -2,6 +2,7 @@
 
 import logging
 import sys
+from typing import Any
 
 import redis.asyncio as redis
 from pydantic import Field
@@ -70,8 +71,8 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Database engine and session
-_async_engine: create_async_engine | None = None
-_async_session_maker: async_sessionmaker | None = None
+_async_engine: Any | None = None
+_async_session_maker: Any | None = None
 _sync_engine = None
 _sync_session_maker = None
 
