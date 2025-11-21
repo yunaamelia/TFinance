@@ -39,8 +39,11 @@ class TestOpenAIService:
     @pytest.fixture
     def ai_service(self):
         """Create OpenAIService instance."""
-        with patch("src.bot.services.ai_service.AsyncOpenAI"):
+        with patch("src.bot.services.ai_service.AsyncOpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_openai.return_value = mock_client
             service = OpenAIService(JARVIS_PERSONA_V1)
+            service.client = mock_client
             return service
 
     def test_service_initialization(self, ai_service):

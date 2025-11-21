@@ -367,4 +367,5 @@ transaction_conversation_handler = ConversationHandler(
         CallbackQueryHandler(cancel_transaction, pattern="^nav:"),
         MessageHandler(filters.COMMAND, cancel_transaction),
     ],
+    per_chat=True,
 )

@@ -239,4 +239,5 @@ ai_chat_conversation_handler = ConversationHandler(
         CallbackQueryHandler(cancel_ai_chat, pattern="^cancel_ai_chat$"),
         MessageHandler(filters.COMMAND, cancel_ai_chat),
     ],
+    per_chat=True,
 )

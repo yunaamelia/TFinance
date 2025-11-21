@@ -289,4 +289,5 @@ summary_conversation_handler = ConversationHandler(
         CallbackQueryHandler(cancel_summary, pattern="^nav:"),
         MessageHandler(filters.COMMAND, cancel_summary),
     ],
+    per_chat=True,
 )

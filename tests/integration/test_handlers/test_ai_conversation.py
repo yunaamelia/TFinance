@@ -93,8 +93,14 @@ class TestAIConversationFlow:
         mock_transaction_service_instance.get_transactions = AsyncMock(return_value=[])
         mock_transaction_service.return_value = mock_transaction_service_instance
 
-        # Mock Redis
-        mock_redis.return_value = AsyncMock()
+        # Mock Redis - get_redis_client is async function, so make it return AsyncMock
+        mock_redis_client = AsyncMock()
+
+        # get_redis_client is async, so we need to make the mock return the client directly
+        async def get_redis_mock():
+            return mock_redis_client
+
+        mock_redis.side_effect = get_redis_mock
 
         # Create a mock message with reply_text
         mock_message = MagicMock(spec=Message)
