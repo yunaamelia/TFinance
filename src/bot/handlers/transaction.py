@@ -227,7 +227,10 @@ async def handle_transaction_description(
     Returns:
         ConversationHandler.END to end conversation
     """
-    description = update.message.text.strip()
+    from src.bot.utils.sanitizer import sanitize_description
+
+    # Sanitize description input
+    description = sanitize_description(update.message.text)
 
     if description.lower() in ("/skip", "skip", "-"):
         description = None

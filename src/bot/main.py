@@ -62,12 +62,14 @@ def main():
     from telegram.ext import CallbackQueryHandler, CommandHandler
 
     from src.bot.handlers.ai_chat import ai_chat_conversation_handler
+    from src.bot.handlers.health import health_check_command
     from src.bot.handlers.navigation import handle_back, handle_help, handle_home
     from src.bot.handlers.start import start_command
     from src.bot.handlers.summary import summary_conversation_handler
     from src.bot.handlers.transaction import transaction_conversation_handler
 
     application.add_handler(CommandHandler("start", start_command))
+    application.add_handler(CommandHandler("health", health_check_command))
     application.add_handler(transaction_conversation_handler)
     application.add_handler(ai_chat_conversation_handler)
     application.add_handler(summary_conversation_handler)

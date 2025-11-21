@@ -186,6 +186,116 @@ This project adheres to the FinancialAssist Constitution:
 - **UX**: WCAG 2.2 Level AA, consistent navigation, design tokens
 - **Performance**: < 2s response time, Core Web Vitals compliance
 
+## API Documentation
+
+### Bot Commands
+
+- `/start` - Initialize bot and show main menu
+- `/health` - Check bot health status (database, Redis connectivity)
+
+### Conversation Flows
+
+#### Transaction Recording
+
+1. Select "💰 Add Transaction" from main menu
+2. Choose transaction type (Income/Expense)
+3. Enter amount (e.g., "50000" or "50,000.00")
+4. Select or enter category
+5. (Optional) Enter description
+6. Confirm transaction
+
+#### Financial Summary
+
+1. Select "📊 View Summary" from main menu
+2. Choose time period (Today, This Week, This Month, Custom)
+3. View summary with income, expenses, and net balance
+4. Optionally view transaction history with pagination
+
+#### AI Assistant (JARVIS)
+
+1. Select "🤖 Ask JARVIS" from main menu
+2. Ask financial questions in natural language
+3. Receive AI-powered insights and recommendations
+4. Continue conversation for follow-up questions
+
+### Navigation
+
+- **Home** - Return to main menu from any screen
+- **Back** - Navigate to previous screen (when available)
+- **Help** - Show contextual help information
+
+## Security Features
+
+- ✅ **Input Sanitization**: All user inputs are sanitized to prevent injection attacks
+- ✅ **SQL Injection Prevention**: Using SQLAlchemy ORM with parameterized queries
+- ✅ **Rate Limiting**: 30 messages/second per user (Telegram API limit)
+- ✅ **Input Validation**: Comprehensive validation for amounts, categories, descriptions
+- ✅ **Error Handling**: User-friendly error messages without exposing sensitive information
+
+## Performance
+
+- **Response Time**: < 2 seconds (95th percentile)
+- **Database Connection Pooling**: 10 connections, 20 max overflow
+- **Query Optimization**: Indexes on frequently queried columns
+- **Caching**: Redis caching for financial summaries (5-minute TTL)
+
+## Monitoring
+
+### Health Check
+
+```bash
+# Via Telegram
+/health
+
+# Response includes:
+# - Database connectivity
+# - Redis connectivity
+# - Uptime
+# - Environment
+```
+
+### Logging
+
+Structured JSON logs are written to:
+
+- **Development**: stdout
+- **Production**: `/var/log/financialassist/bot.log` (rotating, 10MB max, 5 backups)
+
+Log format:
+
+```json
+{
+  "timestamp": "2025-01-27 10:00:00",
+  "level": "INFO",
+  "name": "src.bot.handlers.transaction",
+  "message": "Transaction recorded successfully",
+  "module": "transaction",
+  "function": "confirm_transaction",
+  "line": 284
+}
+```
+
+### Metrics to Monitor
+
+- Response time (should be < 2s)
+- Error rate (should be < 1%)
+- Database connection pool usage
+- Redis memory usage
+- Rate limit violations
+
+## Deployment
+
+See [docs/deployment.md](./docs/deployment.md) for detailed deployment instructions.
+
+## Operations
+
+See [docs/operations.md](./docs/operations.md) for:
+
+- Database backup procedures
+- Recovery procedures
+- Disaster recovery plan
+- Backup verification
+
 ## License
 
 [Your License Here]

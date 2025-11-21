@@ -171,3 +171,35 @@ async def close_redis_client():
 
 # Update log level based on settings
 logging.getLogger().setLevel(getattr(logging, settings.log_level.upper(), logging.INFO))
+
+
+# Setup production file logging if in production
+def setup_production_logging():
+    """Setup file logging for production environment."""
+    if settings.is_production:
+        try:
+            import logging.handlers
+            from pathlib import Path
+
+            log_dir = Path("/var/log/financialassist")
+            log_dir.mkdir(parents=True, exist_ok=True)
+
+            file_handler = logging.handlers.RotatingFileHandler(
+                str(log_dir / "bot.log"),
+                maxBytes=10 * 1024 * 1024,  # 10MB
+                backupCount=5,
+            )
+            file_handler.setFormatter(
+                logging.Formatter(
+                    '{"timestamp": "%(asctime)s", "level": "%(levelname)s", "name": "%(name)s", "message": "%(message)s"}',
+                    datefmt="%Y-%m-%d %H:%M:%S",
+                )
+            )
+            logging.getLogger().addHandler(file_handler)
+            logger.info("Production file logging enabled")
+        except (PermissionError, OSError) as e:
+            logger.warning(f"Could not setup file logging: {e}")
+
+
+# Setup production logging after settings are loaded
+setup_production_logging()

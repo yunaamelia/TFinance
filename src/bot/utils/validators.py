@@ -3,6 +3,10 @@
 from decimal import Decimal, InvalidOperation
 
 from src.bot.utils.errors import ValidationError
+from src.bot.utils.sanitizer import (
+    sanitize_amount_input,
+    sanitize_category_name,
+)
 
 
 def validate_amount(amount_str: str) -> Decimal:
@@ -18,8 +22,11 @@ def validate_amount(amount_str: str) -> Decimal:
         ValidationError: If amount is invalid, negative, zero, or has > 2 decimal places
     """
     try:
+        # Sanitize input first
+        sanitized = sanitize_amount_input(amount_str)
+
         # Remove commas and whitespace
-        cleaned = amount_str.replace(",", "").strip()
+        cleaned = sanitized.replace(",", "").strip()
 
         value = Decimal(cleaned)
 
@@ -52,12 +59,19 @@ def validate_category(category: str, transaction_type: str) -> str:
     Raises:
         ValidationError: If category is invalid
     """
-    category = category.strip()
-
-    if len(category) == 0:
+    # Check length before sanitization (to catch too-long inputs)
+    original_length = len(category.strip())
+    if original_length == 0:
         raise ValidationError("Category must be 1-100 characters", field="category")
 
-    if len(category) > 100:
+    if original_length > 100:
+        raise ValidationError("Category must be 1-100 characters", field="category")
+
+    # Sanitize input after length check
+    category = sanitize_category_name(category)
+
+    # Final length check after sanitization
+    if len(category) == 0:
         raise ValidationError("Category must be 1-100 characters", field="category")
 
     # TODO: Check if system category exists and matches type

@@ -210,18 +210,18 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T097 [P] Update documentation in README.md with setup, usage, and API documentation
-- [ ] T098 [P] Code cleanup and refactoring: Review all handlers for complexity < 10, functions < 50 lines
-- [ ] T099 [P] Performance optimization: Add connection pooling for database, optimize queries with proper indexes
-- [ ] T100 [P] Add comprehensive unit tests to reach 80% coverage target in tests/unit/
-- [ ] T101 [P] Add integration tests for edge cases: invalid input, AI service failures, database errors
-- [ ] T102 Security hardening: Input sanitization, SQL injection prevention, rate limiting implementation
-- [ ] T103 Implement rate limiting middleware in src/bot/main.py to prevent abuse (30 messages/second per bot)
-- [ ] T104 Add monitoring and logging for production: structured logs, error tracking, performance metrics
-- [ ] T105 Run quickstart.md validation: Execute all test scenarios and verify success criteria
-- [ ] T106 [P] Create deployment scripts and documentation in docs/deployment.md
-- [ ] T107 Add health check endpoint for monitoring in src/bot/main.py
-- [ ] T108 [P] Create database backup and recovery procedures in docs/operations.md
+- [x] T097 [P] Update documentation in README.md with setup, usage, and API documentation
+- [x] T098 [P] Code cleanup and refactoring: Review all handlers for complexity < 10, functions < 50 lines
+- [x] T099 [P] Performance optimization: Add connection pooling for database, optimize queries with proper indexes
+- [x] T100 [P] Add comprehensive unit tests to reach 80% coverage target in tests/unit/
+- [x] T101 [P] Add integration tests for edge cases: invalid input, AI service failures, database errors
+- [x] T102 Security hardening: Input sanitization, SQL injection prevention, rate limiting implementation
+- [x] T103 Implement rate limiting middleware in src/bot/main.py to prevent abuse (30 messages/second per bot)
+- [x] T104 Add monitoring and logging for production: structured logs, error tracking, performance metrics
+- [x] T105 Run quickstart.md validation: Execute all test scenarios and verify success criteria
+- [x] T106 [P] Create deployment scripts and documentation in docs/deployment.md
+- [x] T107 Add health check endpoint for monitoring in src/bot/main.py
+- [x] T108 [P] Create database backup and recovery procedures in docs/operations.md
 
 ---
 
