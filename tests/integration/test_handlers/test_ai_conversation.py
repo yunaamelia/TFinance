@@ -1,6 +1,6 @@
 """Integration tests for AI conversation flow."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from telegram import Chat, Message, Update
@@ -39,14 +39,14 @@ class TestAIConversationFlow:
         return context
 
     @pytest.mark.asyncio
-    async def test_start_ai_chat(self, mock_update, mock_context):
+    async def test_start_ai_chat(self, mock_update, mock_context, mocker):
         """Test starting AI chat conversation."""
         from telegram import CallbackQuery
 
-        # Create proper callback query mock
+        # Create proper callback query mock using mocker
         callback_query = MagicMock(spec=CallbackQuery)
-        callback_query.answer = AsyncMock()
-        callback_query.edit_message_text = AsyncMock()
+        callback_query.answer = mocker.AsyncMock()
+        callback_query.edit_message_text = mocker.AsyncMock()
         callback_query.from_user = mock_update.effective_user
         callback_query.data = "ask_jarvis"
 
@@ -62,34 +62,41 @@ class TestAIConversationFlow:
         assert "JARVIS" in call_args[0][0] or "assist" in call_args[0][0].lower()
 
     @pytest.mark.asyncio
-    @patch("src.bot.handlers.ai_chat.get_ai_service")
-    @patch("src.bot.handlers.ai_chat.get_async_session_maker")
-    @patch("src.bot.handlers.ai_chat.TransactionService")
     async def test_handle_ai_message(
         self,
-        mock_transaction_service,
-        mock_session,
-        mock_get_service,
         mock_update,
         mock_context,
+        mocker,
     ):
         """Test handling AI message."""
-        # Mock AI service
-        mock_ai_service = AsyncMock()
-        mock_ai_service.generate_response = AsyncMock(
+        # Mock AI service using mocker - patch the function that returns the service
+        mock_ai_service = mocker.MagicMock()
+        mock_ai_service.generate_response = mocker.AsyncMock(
             return_value="Good day, Sir. How may I assist you today?",
         )
-        mock_get_service.return_value = mock_ai_service
+        # Patch the get_ai_service function to return our mock
+        mocker.patch(
+            "src.bot.handlers.ai_chat.get_ai_service",
+            return_value=mock_ai_service,
+        )
 
         # Mock database session
-        mock_db_session = AsyncMock()
-        mock_session.return_value.__aenter__.return_value = mock_db_session
-        mock_session.return_value.__aexit__.return_value = None
+        mock_db_session = mocker.AsyncMock()
+        mock_session_maker = mocker.MagicMock()
+        mock_session_maker.return_value.__aenter__ = mocker.AsyncMock(return_value=mock_db_session)
+        mock_session_maker.return_value.__aexit__ = mocker.AsyncMock(return_value=None)
+        mocker.patch(
+            "src.bot.handlers.ai_chat.get_async_session_maker",
+            return_value=mock_session_maker,
+        )
 
         # Mock TransactionService
-        mock_transaction_service_instance = AsyncMock()
-        mock_transaction_service_instance.get_transactions = AsyncMock(return_value=[])
-        mock_transaction_service.return_value = mock_transaction_service_instance
+        mock_transaction_service_instance = mocker.AsyncMock()
+        mock_transaction_service_instance.get_transactions = mocker.AsyncMock(return_value=[])
+        mocker.patch(
+            "src.bot.handlers.ai_chat.TransactionService",
+            return_value=mock_transaction_service_instance,
+        )
 
         # Create a mock message with reply_text
         mock_message = MagicMock(spec=Message)
@@ -100,29 +107,26 @@ class TestAIConversationFlow:
 
         # Mock processing message (returned by reply_text)
         mock_processing_msg = MagicMock()
-        mock_processing_msg.edit_text = AsyncMock()
-        mock_processing_msg.delete = AsyncMock()
+        mock_processing_msg.edit_text = mocker.AsyncMock()
+        mock_processing_msg.delete = mocker.AsyncMock()
 
-        # Mock reply_text using AsyncMock with return_value
-        mock_message.reply_text = AsyncMock(return_value=mock_processing_msg)
+        # Mock reply_text using mocker's AsyncMock
+        mock_message.reply_text = mocker.AsyncMock(return_value=mock_processing_msg)
 
         # Mock context.bot.send_chat_action
         mock_context.bot = MagicMock()
-        mock_context.bot.send_chat_action = AsyncMock()
+        mock_context.bot.send_chat_action = mocker.AsyncMock()
 
         # Mock User model query
-
         mock_user_result = MagicMock()
         # scalar_one_or_none() is synchronous, not async
         mock_user_result.scalar_one_or_none.return_value = None  # User doesn't exist
 
-        # execute() is async, so use AsyncMock but ensure it returns the result immediately
-        async def mock_execute(query):
-            return mock_user_result
-
-        mock_db_session.execute = mock_execute
-        # Also mock commit for user creation
-        mock_db_session.commit = AsyncMock()
+        # execute() is async, use mocker's AsyncMock
+        mock_db_session.execute = mocker.AsyncMock(return_value=mock_user_result)
+        # Also mock commit and add for user creation
+        mock_db_session.commit = mocker.AsyncMock()
+        mock_db_session.add = mocker.MagicMock()  # add() is synchronous
 
         await handle_ai_message(mock_update, mock_context)
 
