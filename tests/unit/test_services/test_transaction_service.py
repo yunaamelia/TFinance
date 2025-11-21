@@ -72,6 +72,8 @@ class TestTransactionService:
     @pytest.mark.asyncio
     async def test_get_transactions_pagination(self, transaction_service, mock_session):
         """Test getting transactions with pagination."""
+        from sqlalchemy.ext.asyncio import AsyncResult
+
         user_id = 123456789
 
         # Mock query result
@@ -94,16 +96,23 @@ class TestTransactionService:
             ),
         ]
 
-        # Mock query chain
-        mock_query = MagicMock()
-        mock_query.filter.return_value = mock_query
-        mock_query.order_by.return_value = mock_query
-        mock_query.offset.return_value = mock_query
-        mock_query.limit.return_value = mock_query
-        mock_query.all.return_value = mock_transactions
-        mock_query.count.return_value = 2
+        # Mock Result object (what session.execute returns)
+        mock_result = MagicMock(spec=AsyncResult)
+        mock_result.scalars.return_value.all.return_value = mock_transactions
 
-        mock_session.execute = AsyncMock(return_value=mock_query)
+        # Mock count result
+        mock_count_result = MagicMock(spec=AsyncResult)
+        mock_count_result.scalar_one.return_value = 2
+
+        # Mock session.execute to return different results based on query
+        async def mock_execute(query):
+            # Check if it's a count query
+            query_str = str(query)
+            if "count" in query_str.lower() or "COUNT" in query_str:
+                return mock_count_result
+            return mock_result
+
+        mock_session.execute = AsyncMock(side_effect=mock_execute)
 
         # Get transactions
         result = await transaction_service.get_transactions(user_id, page=1, per_page=20)
