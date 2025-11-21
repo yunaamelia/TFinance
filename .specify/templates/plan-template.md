@@ -31,7 +31,30 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Verify alignment with FinancialAssist Constitution principles:
+
+### Code Quality
+- [ ] Architecture follows SOLID principles
+- [ ] Complexity estimates within limits (functions < 50 lines, complexity < 10)
+- [ ] Code reuse opportunities identified (DRY principle)
+
+### Testing
+- [ ] Testing strategy defined (unit/integration/e2e ratios: 70/25/5)
+- [ ] Coverage targets identified (80% overall, 95% critical paths)
+- [ ] TDD approach planned for new features
+
+### User Experience
+- [ ] WCAG 2.2 Level AA compliance planned
+- [ ] Design tokens available/planned for UI work
+- [ ] Responsive breakpoints considered (mobile/tablet/desktop)
+- [ ] Accessibility requirements identified (keyboard nav, screen readers, contrast)
+
+### Performance
+- [ ] Performance targets defined (Core Web Vitals, API response times)
+- [ ] Performance budget established
+- [ ] Optimization strategies identified (caching, lazy loading, bundle size)
+
+**Violations**: Document any necessary exceptions in Complexity Tracking section below.
 
 ## Project Structure
 
