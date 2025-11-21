@@ -36,7 +36,7 @@ black>=23.0.0
 pre-commit>=3.0.0
 bandit>=1.7.5
 detect-secrets>=1.4.0
-markdownlint-cli>=0.38.0
+# Note: markdownlint-cli is a Node.js package, installed automatically by pre-commit
 
 # Utilities
 python-dateutil>=2.8.0
